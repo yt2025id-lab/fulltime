@@ -112,10 +112,15 @@ export class TxLineClient {
     // Step 2: Load wallet & subscribe on-chain
     const wallet = this.loadWallet();
 
-    // Load IDL
+    // Load IDL sesuai network
+    const idlFileName =
+      this.network === "mainnet"
+        ? "txoracle_mainnet.json"
+        : "txoracle_devnet.json";
     const idlPath = path.resolve(
       __dirname,
-      "../idl/txoracle_devnet.json"
+      "../idl",
+      idlFileName
     );
     const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
 
