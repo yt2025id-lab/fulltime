@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --neo-pink: #FF1493;
+  --neo-yellow: #FFD700;
+  --neo-cyan: #00FFFF;
+  --neo-purple: #8B00FF;
+  --neo-black: #111111;
+  --neo-white: #FAFAFA;
+}
+
+body {
+  background-color: var(--neo-white);
+  color: var(--neo-black);
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+}
