@@ -163,7 +163,7 @@ export class TxLineClient {
     }
 
     // Subscribe to free tier
-    const txSig = await this.program.methods
+    const txSig = await this.program!.methods
       .subscribe(1, 4)
       .accounts({
         user: wallet.publicKey,
@@ -292,7 +292,7 @@ export class TxLineClient {
     }
 
     const latestScore = scores[scores.length - 1];
-    const phase = latestScore.Phase ?? 1;
+    const phase = latestScore.phase ?? latestScore.phaseId ?? 1;
 
     return {
       phase,
@@ -311,6 +311,18 @@ export class TxLineClient {
   }
 
   // ─── Helpers ─────────────────────────────────────────────────
+  getJwt(): string | null {
+    return this.jwt;
+  }
+
+  getApiToken(): string | null {
+    return this.apiToken;
+  }
+
+  getHttpClient(): AxiosInstance | null {
+    return this.httpClient;
+  }
+
   private loadWallet(): anchor.Wallet {
     const keypairPath = path.resolve(
       process.env.HOME || "~",
@@ -346,13 +358,28 @@ export interface TxLineFixture {
 }
 
 export interface TxLineScore {
-  StatKey?: number;
-  Value?: number;
-  Phase?: number;
-  Timestamp?: number;
+  key?: number;
+  value?: number;
+  period?: number;
+  phase?: number;
+  phaseId?: number;
+  gameState?: number;
+  seq?: number;
+  sequence?: number;
+  Sequence?: number;
+  ts?: number;
+  timestamp?: number;
 }
 
 export interface StatValidationResponse {
+  ts: number;
+  statToProve: {
+    key: number;
+    value: number;
+    period: number;
+  };
+  eventStatRoot: number[];
+  statProof: ProofNode[];
   summary: {
     fixtureId: number;
     updateStats: {
@@ -360,18 +387,19 @@ export interface StatValidationResponse {
       minTimestamp: number;
       maxTimestamp: number;
     };
-    eventStatsSubTreeRoot: string;
+    eventStatsSubTreeRoot: number[];
   };
   subTreeProof: ProofNode[];
   mainTreeProof: ProofNode[];
-  statToProve: number;
-  eventStatRoot: string;
-  statProof: ProofNode[];
-  statToProve2?: number;
+  statToProve2?: {
+    key: number;
+    value: number;
+    period: number;
+  };
   statProof2?: ProofNode[];
 }
 
 export interface ProofNode {
-  hash: number[] | string;
+  hash: number[];
   isRightSibling: boolean;
 }
