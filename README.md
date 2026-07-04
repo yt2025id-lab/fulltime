@@ -11,7 +11,7 @@
 
 | Resource | URL |
 |---|---|
-| **Live Demo** | *(deploy ke Vercel — coming soon)* |
+| **Live Demo** | https://fulltime-wc.vercel.app* |
 | **Devnet Program** | [`58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x`](https://explorer.solana.com/address/58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x?cluster=devnet) |
 | **TxLINE Data Source** | [txline-docs.txodds.com](https://txline-docs.txodds.com/) |
 | **Hackathon Listing** | [Superteam Earn — Prediction Markets & Settlement](https://superteam.fun/earn/listing/prediction-markets-and-settlement/) |
