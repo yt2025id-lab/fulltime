@@ -7,18 +7,20 @@ import { BN } from "@coral-xyz/anchor";
 import Navbar from "../components/Navbar";
 
 const WC_FIXTURES = [
+  // Upcoming — Round of 16 / Quarterfinals (live from TxLINE devnet)
+  { id: 18202701, home: "Argentina", away: "Egypt" },
+  { id: 18202783, home: "Switzerland", away: "Colombia" },
+  { id: 18188721, home: "Paraguay", away: "France" },
+  { id: 18187298, home: "Brazil", away: "Norway" },
+  { id: 18192996, home: "Mexico", away: "England" },
+  { id: 18193785, home: "USA", away: "Belgium" },
+  { id: 18198205, home: "Portugal", away: "Spain" },
+  { id: 18185036, home: "Canada", away: "Morocco" },
+  // Past (for testing settlement)
   { id: 18179549, home: "Colombia", away: "Ghana" },
-  { id: 18175918, home: "Argentina", away: "Cape Verde" },
   { id: 18176123, home: "Australia", away: "Egypt" },
   { id: 18167317, home: "South Africa", away: "Canada" },
-  { id: 18172489, home: "Brazil", away: "Japan" },
-  { id: 18175983, home: "Germany", away: "Paraguay" },
-  { id: 18172260, home: "Netherlands", away: "Morocco" },
-  { id: 18175397, home: "Ivory Coast", away: "Norway" },
-  { id: 18175981, home: "France", away: "Sweden" },
-  { id: 18179759, home: "Mexico", away: "Ecuador" },
-  { id: 18179764, home: "England", away: "Congo DR" },
-  { id: 18179550, home: "Belgium", away: "Senegal" },
+  { id: 18175918, home: "Argentina", away: "Cape Verde" },
 ];
 
 export default function Admin() {
