@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
-import { useConnection } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
 import Navbar from "../components/Navbar";
 
 interface MarketData {
@@ -39,7 +37,6 @@ export default function Markets() {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const program = useProgram();
-  const { connection } = useConnection();
 
   useEffect(() => {
     if (!program) return;
@@ -47,43 +44,25 @@ export default function Markets() {
   }, [program]);
 
   async function loadMarkets() {
+    if (!program) return;
     try {
-      const accounts = await connection.getProgramAccounts(
-        new PublicKey(FULLTIME_ID),
-        {
-          filters: [
-            {
-              memcmp: {
-                offset: 0,
-                bytes: "U8qf9A7qqTa1dLWK6nCYyA",
-              },
-            },
-          ],
-        }
-      );
-
-      const data: MarketData[] = [];
-      for (const { pubkey, account } of accounts) {
-        try {
-          const m = await (program as any).account.market.fetch(pubkey);
-          data.push({
-            pda: pubkey.toBase58(),
-            fixtureId: m.fixtureId.toNumber(),
-            question: m.question,
-            creator: m.creator.toBase58(),
-            totalPool: m.totalPool.toNumber() / 1e9,
-            status: Object.keys(m.status)[0],
-            poolHome: m.poolHome.toNumber() / 1e9,
-            poolDraw: m.poolDraw.toNumber() / 1e9,
-            poolAway: m.poolAway.toNumber() / 1e9,
-            bettingCloseTime: m.bettingCloseTime.toNumber(),
-          });
-        } catch {}
-      }
+      const allMarkets = await (program as any).account.market.all();
+      const data: MarketData[] = allMarkets.map((m: any) => ({
+        pda: m.publicKey.toBase58(),
+        fixtureId: m.account.fixtureId.toNumber(),
+        question: m.account.question,
+        creator: m.account.creator.toBase58(),
+        totalPool: m.account.totalPool.toNumber() / 1e9,
+        status: Object.keys(m.account.status)[0],
+        poolHome: m.account.poolHome.toNumber() / 1e9,
+        poolDraw: m.account.poolDraw.toNumber() / 1e9,
+        poolAway: m.account.poolAway.toNumber() / 1e9,
+        bettingCloseTime: m.account.bettingCloseTime.toNumber(),
+      }));
 
       setMarkets(data.sort((a, b) => b.bettingCloseTime - a.bettingCloseTime));
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load markets:", err);
     } finally {
       setLoading(false);
     }

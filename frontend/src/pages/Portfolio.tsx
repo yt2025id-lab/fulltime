@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
+import { useProgram } from "../context/FullTimeContext";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { useConnection } from "@solana/wallet-adapter-react";
 import Navbar from "../components/Navbar";
 
 interface BetView {
@@ -20,7 +19,6 @@ interface BetView {
 export default function Portfolio() {
   const program = useProgram();
   const wallet = useWallet();
-  const { connection } = useConnection();
   const [bets, setBets] = useState<BetView[]>([]);
   const [loading, setLoading] = useState(true);
   const [txMsg, setTxMsg] = useState("");
@@ -34,25 +32,19 @@ export default function Portfolio() {
   }, [program, wallet.publicKey]);
 
   async function loadBets() {
+    if (!program || !wallet.publicKey) return;
     try {
-      const accounts = await connection.getProgramAccounts(
-        new PublicKey(FULLTIME_ID),
-        {
-          filters: [
-            { memcmp: { offset: 0, bytes: "5XQeKAhjkvc5vWNjH" } }, // Bet discriminator
-            { memcmp: { offset: 40, bytes: wallet.publicKey!.toBase58() } }, // bettor at offset 40
-          ],
-        }
-      );
+      const allBets = await (program as any).account.bet.all([
+        { memcmp: { offset: 40, bytes: wallet.publicKey.toBase58() } },
+      ]);
 
       const data: BetView[] = [];
-      for (const { pubkey, account } of accounts) {
+      for (const b of allBets) {
         try {
-          const bet = await (program as any).account.bet.fetch(pubkey);
+          const bet = b.account;
           let marketQuestion = "";
           let marketStatus = "";
           let marketWinner = 0;
-
           try {
             const m = await (program as any).account.market.fetch(bet.market);
             marketQuestion = m.question;
@@ -61,7 +53,7 @@ export default function Portfolio() {
           } catch {}
 
           data.push({
-            pda: pubkey.toBase58(),
+            pda: b.publicKey.toBase58(),
             market: bet.market.toBase58(),
             optionIndex: bet.optionIndex,
             amount: bet.amount.toNumber() / LAMPORTS_PER_SOL,
@@ -75,7 +67,7 @@ export default function Portfolio() {
 
       setBets(data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load bets:", err);
     } finally {
       setLoading(false);
     }

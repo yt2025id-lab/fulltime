@@ -1,0 +1,1395 @@
+{
+  "address": "58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x",
+  "metadata": {
+    "name": "fulltime",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "FullTime — Trustless Prediction Market with Auto-Settlement via TxLINE Merkle Proofs"
+  },
+  "instructions": [
+    {
+      "name": "cancel_market",
+      "discriminator": [
+        205,
+        121,
+        84,
+        210,
+        222,
+        71,
+        150,
+        11
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.fixture_id",
+                "account": "Market"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_payout",
+      "discriminator": [
+        127,
+        240,
+        132,
+        62,
+        227,
+        198,
+        146,
+        133
+      ],
+      "accounts": [
+        {
+          "name": "bettor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.fixture_id",
+                "account": "Market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "bettor"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "close_betting",
+      "discriminator": [
+        183,
+        243,
+        76,
+        1,
+        242,
+        130,
+        138,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.fixture_id",
+                "account": "Market"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_market",
+      "discriminator": [
+        103,
+        226,
+        97,
+        235,
+        200,
+        188,
+        251,
+        254
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "arg",
+                "path": "fixture_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "fixture_id",
+          "type": "u64"
+        },
+        {
+          "name": "question",
+          "type": "string"
+        },
+        {
+          "name": "betting_open_time",
+          "type": "i64"
+        },
+        {
+          "name": "betting_close_time",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "open_market",
+      "discriminator": [
+        116,
+        19,
+        123,
+        75,
+        217,
+        244,
+        69,
+        44
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.fixture_id",
+                "account": "Market"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "place_bet",
+      "discriminator": [
+        222,
+        62,
+        67,
+        220,
+        63,
+        166,
+        126,
+        33
+      ],
+      "accounts": [
+        {
+          "name": "bettor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.fixture_id",
+                "account": "Market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "bettor"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "option_index",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "refund_bet",
+      "discriminator": [
+        209,
+        182,
+        226,
+        96,
+        55,
+        121,
+        83,
+        183
+      ],
+      "accounts": [
+        {
+          "name": "bettor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.fixture_id",
+                "account": "Market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "bettor"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settle_market",
+      "discriminator": [
+        193,
+        153,
+        95,
+        216,
+        166,
+        6,
+        144,
+        217
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  61,
+                  95,
+                  40,
+                  217,
+                  116,
+                  33,
+                  84,
+                  56,
+                  231,
+                  48,
+                  254,
+                  88,
+                  114,
+                  190,
+                  240,
+                  241,
+                  192,
+                  117,
+                  79,
+                  212,
+                  96,
+                  138,
+                  30,
+                  219,
+                  111,
+                  207,
+                  113,
+                  140,
+                  84,
+                  151,
+                  229,
+                  7
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.fixture_id",
+                "account": "Market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "daily_scores_merkle_roots",
+          "docs": [
+            "diverifikasi seed-nya di instruksi, bukan di derive macro"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "target_ts",
+          "type": "i64"
+        },
+        {
+          "name": "fixture_summary",
+          "type": {
+            "defined": {
+              "name": "ScoresBatchSummary"
+            }
+          }
+        },
+        {
+          "name": "fixture_proof",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "ProofNode"
+              }
+            }
+          }
+        },
+        {
+          "name": "main_tree_proof",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "ProofNode"
+              }
+            }
+          }
+        },
+        {
+          "name": "stat_a",
+          "type": {
+            "defined": {
+              "name": "StatTerm"
+            }
+          }
+        },
+        {
+          "name": "stat_b",
+          "type": {
+            "defined": {
+              "name": "StatTerm"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Bet",
+      "discriminator": [
+        147,
+        23,
+        35,
+        59,
+        15,
+        75,
+        155,
+        32
+      ]
+    },
+    {
+      "name": "Market",
+      "discriminator": [
+        219,
+        190,
+        213,
+        55,
+        0,
+        227,
+        198,
+        154
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BetPlaced",
+      "discriminator": [
+        88,
+        88,
+        145,
+        226,
+        126,
+        206,
+        32,
+        0
+      ]
+    },
+    {
+      "name": "MarketCreated",
+      "discriminator": [
+        88,
+        184,
+        130,
+        231,
+        226,
+        84,
+        6,
+        58
+      ]
+    },
+    {
+      "name": "MarketSettled",
+      "discriminator": [
+        237,
+        212,
+        22,
+        175,
+        201,
+        117,
+        215,
+        99
+      ]
+    },
+    {
+      "name": "PayoutClaimed",
+      "discriminator": [
+        200,
+        39,
+        105,
+        112,
+        116,
+        63,
+        58,
+        149
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "QuestionTooLong",
+      "msg": "Question terlalu panjang (max 200 karakter)"
+    },
+    {
+      "code": 6001,
+      "name": "BettingCloseTimeInPast",
+      "msg": "Betting close time harus di masa depan"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidBettingWindow",
+      "msg": "Betting close time harus setelah open time"
+    },
+    {
+      "code": 6003,
+      "name": "MarketNotOpen",
+      "msg": "Market belum open"
+    },
+    {
+      "code": 6004,
+      "name": "BettingClosed",
+      "msg": "Betting window sudah tutup"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidOptionIndex",
+      "msg": "Option index di luar batas (0=HOME, 1=DRAW, 2=AWAY)"
+    },
+    {
+      "code": 6006,
+      "name": "MarketNotClosed",
+      "msg": "Market belum closed, tidak bisa di-settle"
+    },
+    {
+      "code": 6007,
+      "name": "MarketAlreadySettled",
+      "msg": "Market sudah di-settle"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidMarketStatus",
+      "msg": "Market tidak dalam status yang benar"
+    },
+    {
+      "code": 6009,
+      "name": "ClaimNotAvailable",
+      "msg": "Belum waktunya klaim — market belum settled atau still disputed"
+    },
+    {
+      "code": 6010,
+      "name": "AlreadyClaimed",
+      "msg": "Bet ini sudah diklaim"
+    },
+    {
+      "code": 6011,
+      "name": "NotWinner",
+      "msg": "Opsi yang dipilih bukan pemenang"
+    },
+    {
+      "code": 6012,
+      "name": "UnauthorizedCancel",
+      "msg": "Hanya creator market yang bisa cancel"
+    },
+    {
+      "code": 6013,
+      "name": "MerkleVerificationFailed",
+      "msg": "Verifikasi Merkle proof gagal — stat tidak valid atau fixture salah"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidStatValue",
+      "msg": "Stat value tidak valid (harus >= 0)"
+    },
+    {
+      "code": 6015,
+      "name": "InsufficientFunds",
+      "msg": "Jumlah bet harus > 0"
+    },
+    {
+      "code": 6016,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidDailyScoresRoots",
+      "msg": "Daily scores roots PDA tidak dikenali"
+    }
+  ],
+  "types": [
+    {
+      "name": "Bet",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "bettor",
+            "type": "pubkey"
+          },
+          {
+            "name": "option_index",
+            "type": "u8"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BetPlaced",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "bettor",
+            "type": "pubkey"
+          },
+          {
+            "name": "option_index",
+            "type": "u8"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Market",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fixture_id",
+            "type": "u64"
+          },
+          {
+            "name": "question",
+            "type": "string"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "outcome_count",
+            "type": "u8"
+          },
+          {
+            "name": "total_pool",
+            "type": "u64"
+          },
+          {
+            "name": "pool_home",
+            "type": "u64"
+          },
+          {
+            "name": "pool_draw",
+            "type": "u64"
+          },
+          {
+            "name": "pool_away",
+            "type": "u64"
+          },
+          {
+            "name": "betting_open_time",
+            "type": "i64"
+          },
+          {
+            "name": "betting_close_time",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "MarketStatus"
+              }
+            }
+          },
+          {
+            "name": "winning_option",
+            "type": "u8"
+          },
+          {
+            "name": "settlement_root",
+            "type": "pubkey"
+          },
+          {
+            "name": "settlement_epoch_day",
+            "type": "u16"
+          },
+          {
+            "name": "settlement_ts",
+            "type": "i64"
+          },
+          {
+            "name": "dispute_until",
+            "type": "i64"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "fixture_id",
+            "type": "u64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "question",
+            "type": "string"
+          },
+          {
+            "name": "betting_close_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "fixture_id",
+            "type": "u64"
+          },
+          {
+            "name": "winning_option",
+            "type": "u8"
+          },
+          {
+            "name": "home_goals",
+            "type": "i32"
+          },
+          {
+            "name": "away_goals",
+            "type": "i32"
+          },
+          {
+            "name": "settlement_root",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Closed"
+          },
+          {
+            "name": "Settled"
+          },
+          {
+            "name": "Cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PayoutClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "bettor",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProofNode",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "is_right_sibling",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ScoreStat",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "key",
+            "type": "u32"
+          },
+          {
+            "name": "value",
+            "type": "i32"
+          },
+          {
+            "name": "period",
+            "type": "i32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ScoresBatchSummary",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fixture_id",
+            "type": "i64"
+          },
+          {
+            "name": "update_stats",
+            "type": {
+              "defined": {
+                "name": "ScoresUpdateStats"
+              }
+            }
+          },
+          {
+            "name": "events_sub_tree_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ScoresUpdateStats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "update_count",
+            "type": "i32"
+          },
+          {
+            "name": "min_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "max_timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StatTerm",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stat_to_prove",
+            "type": {
+              "defined": {
+                "name": "ScoreStat"
+              }
+            }
+          },
+          {
+            "name": "event_stat_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "stat_proof",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ProofNode"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
