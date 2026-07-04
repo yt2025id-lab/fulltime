@@ -1,7 +1,7 @@
 [package]
 name = "fulltime"
 version = "0.1.0"
-description = "Created with Anchor"
+description = "FullTime — Trustless Prediction Market with Auto-Settlement via TxLINE Merkle Proofs"
 edition = "2021"
 
 [lib]

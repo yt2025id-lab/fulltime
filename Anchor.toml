@@ -6,7 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-fulltime = "6AWLMoQ31mqSgNT4ttGvK347riXiBdqV7HutpCCZKkRa"
+fulltime = "6zQK3dYwKp5AKVvknkPLvfxKLZJ1PVaVr393vugtVKQc"
+
+[programs.localnet]
+fulltime = "6zQK3dYwKp5AKVvknkPLvfxKLZJ1PVaVr393vugtVKQc"
 
 [registry]
 url = "https://api.apr.dev"
