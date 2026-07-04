@@ -7,16 +7,16 @@ export default function Marquee({
 }) {
   const items = [...countries, ...countries]; // double for seamless loop
   return (
-    <div className="border-y-4 border-black bg-[#111] py-4 overflow-hidden">
+    <div className="border-y-4 border-black bg-[#111] py-6 overflow-hidden">
       <div
-        className={`flex gap-6 whitespace-nowrap animate-marquee ${
-          reverse ? "animate-marquee-reverse" : ""
+        className={`flex gap-0 whitespace-nowrap ${
+          reverse ? "animate-marquee-reverse" : "animate-marquee"
         }`}
       >
         {items.map((c, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-2 text-white text-sm font-bold px-4 py-2 border-2 border-white/20 bg-white/5"
+            className="inline-flex items-center gap-3 text-white font-black text-2xl md:text-3xl mx-6"
           >
             {c}
           </span>
@@ -31,8 +31,8 @@ export default function Marquee({
           0% { transform: translateX(-50%); }
           100% { transform: translateX(0); }
         }
-        .animate-marquee { animation: marquee 40s linear infinite; }
-        .animate-marquee-reverse { animation: marquee-reverse 40s linear infinite; }
+        .animate-marquee { animation: marquee 30s linear infinite; }
+        .animate-marquee-reverse { animation: marquee-reverse 30s linear infinite; }
         .animate-marquee:hover, .animate-marquee-reverse:hover { animation-play-state: paused; }
       `}</style>
     </div>
