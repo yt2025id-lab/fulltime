@@ -55,7 +55,7 @@ export default function Markets() {
             {
               memcmp: {
                 offset: 0,
-                bytes: "Dg4UZq5MQCtq",
+                bytes: "U8qf9A7qqTa1dLWK6nCYyA",
               },
             },
           ],

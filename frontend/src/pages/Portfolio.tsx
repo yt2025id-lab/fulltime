@@ -39,7 +39,7 @@ export default function Portfolio() {
         new PublicKey(FULLTIME_ID),
         {
           filters: [
-            { memcmp: { offset: 0, bytes: "LRfi4TvquPVs" } }, // Bet discriminator
+            { memcmp: { offset: 0, bytes: "5XQeKAhjkvc5vWNjH" } }, // Bet discriminator
             { memcmp: { offset: 40, bytes: wallet.publicKey!.toBase58() } }, // bettor at offset 40
           ],
         }
