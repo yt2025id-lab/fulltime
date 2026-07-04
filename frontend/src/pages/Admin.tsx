@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useProgram } from "../context/FullTimeContext";
+import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
+import { PublicKey } from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
 import Navbar from "../components/Navbar";
 
@@ -25,12 +27,30 @@ export default function Admin() {
   const [fixtureId, setFixtureId] = useState("");
   const [question, setQuestion] = useState("");
   const [openMinutes, setOpenMinutes] = useState("0");
-  const [closeHours, setCloseHours] = useState("24");
+  const [closeHours, setCloseHours] = useState("1");
   const [txMsg, setTxMsg] = useState("");
+  const [createdMarket, setCreatedMarket] = useState<{
+    pda: string;
+    fixtureId: number;
+  } | null>(null);
 
   function selectFixture(f: (typeof WC_FIXTURES)[0]) {
     setFixtureId(String(f.id));
     setQuestion(`${f.home} vs ${f.away} — Who wins?`);
+    setCreatedMarket(null);
+  }
+
+  function marketPda(fixtureId: number, creatorPk: PublicKey): string {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("market"),
+        new PublicKey(FULLTIME_ID).toBuffer(),
+        creatorPk.toBuffer(),
+        new BN(fixtureId).toArrayLike(Buffer, "le", 8),
+      ],
+      new PublicKey(FULLTIME_ID)
+    );
+    return pda.toBase58();
   }
 
   async function createMarket() {
@@ -39,21 +59,34 @@ export default function Admin() {
     const now = Math.floor(Date.now() / 1000);
     const openTime = now + parseInt(openMinutes) * 60;
     const closeTime = openTime + parseInt(closeHours) * 3600;
+    const fid = parseInt(fixtureId);
 
     setTxMsg("Creating market...");
+    setCreatedMarket(null);
 
     try {
       const tx = await program.methods
-        .createMarket(
-          new BN(parseInt(fixtureId)),
-          question,
-          new BN(openTime),
-          new BN(closeTime)
-        )
+        .createMarket(new BN(fid), question, new BN(openTime), new BN(closeTime))
         .accounts({ creator: wallet.publicKey })
         .rpc();
 
+      const pda = marketPda(fid, wallet.publicKey);
       setTxMsg(`✅ Market created! TX: ${tx.slice(0, 20)}...`);
+      setCreatedMarket({ pda, fixtureId: fid });
+    } catch (err: any) {
+      setTxMsg(`❌ ${err.message.slice(0, 150)}`);
+    }
+  }
+
+  async function openMarket(pda: string) {
+    if (!program || !wallet.publicKey) return;
+    setTxMsg("Opening market...");
+    try {
+      const tx = await program.methods
+        .openMarket()
+        .accounts({ market: new PublicKey(pda) })
+        .rpc();
+      setTxMsg(`✅ Market opened! TX: ${tx.slice(0, 20)}...`);
     } catch (err: any) {
       setTxMsg(`❌ ${err.message.slice(0, 150)}`);
     }
@@ -150,6 +183,29 @@ export default function Admin() {
             {txMsg && (
               <div className="border-2 border-black p-4 bg-gray-100 text-sm font-mono break-all">
                 {txMsg}
+              </div>
+            )}
+
+            {createdMarket && (
+              <div className="mt-6 border-4 border-black p-6 shadow-[4px_4px_0px_#000] bg-[#FFD700]/20">
+                <h2 className="font-black text-lg mb-4">✅ MARKET CREATED</h2>
+                <p className="text-sm font-mono break-all mb-2">
+                  <span className="font-bold">PDA:</span> {createdMarket.pda.slice(0, 16)}...
+                </p>
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => openMarket(createdMarket.pda)}
+                    className="flex-1 bg-black text-white py-2 border-2 border-black font-bold text-sm shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                  >
+                    OPEN MARKET
+                  </button>
+                  <Link
+                    to={`/markets/${createdMarket.pda}`}
+                    className="flex-1 text-center bg-[#FFD700] py-2 border-2 border-black font-bold text-sm shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                  >
+                    VIEW MARKET ↗
+                  </Link>
+                </div>
               </div>
             )}
           </>

@@ -181,6 +181,35 @@ export default function MarketDetail() {
           </div>
         </div>
 
+        {/* Pending: open market button */}
+        {market.status === "pending" && wallet.publicKey && (
+          <div className="border-4 border-black p-6 mb-6 shadow-[4px_4px_0px_#000] bg-[#FFD700]/10">
+            <h2 className="font-black text-lg mb-2">⏳ MARKET PENDING</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Market belum open. Klik tombol di bawah untuk membuka betting.
+            </p>
+            <button
+              onClick={async () => {
+                if (!program || !wallet.publicKey) return;
+                setTxStatus("Opening market...");
+                try {
+                  const tx = await program.methods
+                    .openMarket()
+                    .accounts({ market: new PublicKey(market.pda) })
+                    .rpc();
+                  setTxStatus(`✅ Opened! ${tx.slice(0, 20)}...`);
+                  fetchMarket();
+                } catch (err: any) {
+                  setTxStatus(`❌ ${err.message.slice(0, 100)}`);
+                }
+              }}
+              className="w-full bg-black text-white py-3 border-2 border-black font-black text-lg shadow-[4px_4px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] transition-all"
+            >
+              OPEN MARKET
+            </button>
+          </div>
+        )}
+
         {/* Betting section */}
         {market.status === "open" && wallet.publicKey && (
           <div className="border-4 border-black p-6 mb-6 shadow-[4px_4px_0px_#000]">
