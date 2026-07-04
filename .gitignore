@@ -11,3 +11,8 @@ dist/
 *.log
 relay-service/node_modules/
 frontend/node_modules/
+PLAN.md
+PRD.md
+BUILD_PROMPT.md
+HACKATHON_INFO.md
+relay-service/WORLDCUP_SCHEDULE.md
