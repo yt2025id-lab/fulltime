@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("D9NfB9gGqxiDa4JxpYPmTccX6iwXCwys1HzvsWxZSBkh");
+declare_id!("58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x");
 
 // ─── Constants ────────────────────────────────────────────────────
 const DISPUTE_WINDOW_SECONDS: i64 = 3600;
@@ -640,7 +640,8 @@ pub mod fulltime {
         );
 
         // Verifikasi daily_scores_merkle_roots adalah PDA valid dari TxLINE
-        let epoch_day = ((target_ts / 86400) as u16).to_le_bytes();
+        // target_ts dalam MILLISECONDS (format TxLINE) → epoch_day = ms / 86400000
+        let epoch_day = ((target_ts / 86400000) as u16).to_le_bytes();
         let (expected_pda, _bump) = Pubkey::find_program_address(
             &[b"daily_scores_roots", &epoch_day],
             &TXLINE_TXORACLE_ID,
@@ -689,7 +690,7 @@ pub mod fulltime {
         market.status = MarketStatus::Settled;
         market.winning_option = winning_option;
         market.settlement_root = ctx.accounts.daily_scores_merkle_roots.key();
-        market.settlement_epoch_day = (target_ts / 86400) as u16;
+        market.settlement_epoch_day = (target_ts / 86400000) as u16;
         market.settlement_ts = now;
         market.dispute_until = now
             .checked_add(DISPUTE_WINDOW_SECONDS)

@@ -101,10 +101,11 @@ const PHASE_NAMES: Record<number, string> = {
 export class ScoresStream extends EventEmitter {
   private streamUrl: string;
   private headers: Record<string, string>;
-  private seenFixtures: Map<number, number> = new Map(); // fixtureId → last phaseId
+  private seenFixtures: Map<number, number> = new Map();
   private running = false;
   private retryCount = 0;
   private maxRetries: number;
+  private abortController: AbortController | null = null;
 
   constructor(
     streamUrl: string,
@@ -132,8 +133,10 @@ export class ScoresStream extends EventEmitter {
     while (this.running && this.retryCount < this.maxRetries) {
       try {
         await this.connect();
-        this.retryCount = 0; // reset on clean disconnect
+        this.retryCount = 0;
       } catch (err: any) {
+        if (!this.running) break;
+        if (err.name === "AbortError") break;
         this.retryCount++;
         const delay = Math.min(1000 * 2 ** this.retryCount, 30000);
         console.error(
@@ -153,11 +156,19 @@ export class ScoresStream extends EventEmitter {
 
   stop(): void {
     this.running = false;
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
   }
 
   // ─── Private ─────────────────────────────────────────────────
   private async connect(): Promise<void> {
-    const response = await fetch(this.streamUrl, { headers: this.headers });
+    this.abortController = new AbortController();
+    const response = await fetch(this.streamUrl, {
+      headers: this.headers,
+      signal: this.abortController.signal,
+    });
 
     if (!response.ok) {
       throw new Error(

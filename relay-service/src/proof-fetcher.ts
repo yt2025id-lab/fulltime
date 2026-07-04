@@ -74,23 +74,37 @@ export class ProofFetcher {
     );
 
     try {
-      // Cari seq yang tepat melalui scores snapshot
-      const scores = await this.txline.getScoresSnapshot(fixtureId);
-      const seq = scores?.length ?? 1;
+      // Coba fetch stat-validation tanpa seq dulu — API akan return data terbaru
+      // Kalau gagal, coba dengan seq yang dihitung dari scores snapshot
+      let v1: any;
+      let v2: any;
 
-      // Fetch stat validation untuk HOME goals (key=1)
-      const v1 = await this.txline.getStatValidation({
-        fixtureId,
-        seq,
-        statKey: 1,
-      });
-
-      // Fetch stat validation untuk AWAY goals (key=2)
-      const v2 = await this.txline.getStatValidation({
-        fixtureId,
-        seq,
-        statKey: 2,
-      });
+      try {
+        v1 = await this.txline.getStatValidation({
+          fixtureId,
+          seq: 1,
+          statKey: 1,
+        });
+        v2 = await this.txline.getStatValidation({
+          fixtureId,
+          seq: 1,
+          statKey: 2,
+        });
+      } catch {
+        // Fallback: cari seq via scores
+        const scores = await this.txline.getScoresSnapshot(fixtureId);
+        const seq = scores?.length ?? 1;
+        v1 = await this.txline.getStatValidation({
+          fixtureId,
+          seq,
+          statKey: 1,
+        });
+        v2 = await this.txline.getStatValidation({
+          fixtureId,
+          seq,
+          statKey: 2,
+        });
+      }
 
       if (!v1?.summary?.fixtureId) {
         console.log(`[Proof] No validation data for fixture #${fixtureId}`);

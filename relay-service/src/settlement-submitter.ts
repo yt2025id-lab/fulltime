@@ -14,7 +14,6 @@ import {
   Connection,
   PublicKey,
   ComputeBudgetProgram,
-  sendAndConfirmTransaction,
 } from "@solana/web3.js";
 import { ProofFetcher, SettlementProofData } from "./proof-fetcher";
 import { TxLineClient } from "./txline-client";
@@ -29,7 +28,7 @@ const TXLINE_PROGRAM_ID =
 
 const FULLTIME_PROGRAM_ID =
   process.env.FULLTIME_PROGRAM_ID ||
-  "D9NfB9gGqxiDa4JxpYPmTccX6iwXCwys1HzvsWxZSBkh";
+  "58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x";
 
 const RPC_URL =
   process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
@@ -102,7 +101,7 @@ export class SettlementSubmitter {
 
     // 3. Submit settlement transaction
     try {
-      // Konversi targetTs dari milliseconds ke i64 untuk contract
+      // targetTs dalam milliseconds — contract dan TxLINE sama-sama pakai ms
       const targetTsI64 = new anchor.BN(proof.targetTs);
 
       // Build instruction data
