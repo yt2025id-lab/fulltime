@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("6zQK3dYwKp5AKVvknkPLvfxKLZJ1PVaVr393vugtVKQc");
+declare_id!("D9NfB9gGqxiDa4JxpYPmTccX6iwXCwys1HzvsWxZSBkh");
 
 // ─── Constants ────────────────────────────────────────────────────
 const DISPUTE_WINDOW_SECONDS: i64 = 3600;
@@ -273,7 +273,7 @@ pub struct PlaceBet<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CloseBetting<'info> {
+pub struct ManageMarket<'info> {
     #[account(
         mut,
         seeds = [
@@ -352,6 +352,36 @@ pub struct CancelMarket<'info> {
         constraint = market.creator == creator.key() @ FullTimeError::UnauthorizedCancel,
     )]
     pub market: Account<'info, Market>,
+}
+
+#[derive(Accounts)]
+pub struct RefundBet<'info> {
+    #[account(mut)]
+    pub bettor: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [
+            b"market",
+            crate::id().as_ref(),
+            market.creator.as_ref(),
+            &market.fixture_id.to_le_bytes(),
+        ],
+        bump = market.bump,
+    )]
+    pub market: Account<'info, Market>,
+
+    #[account(
+        mut,
+        close = bettor,
+        seeds = [
+            b"bet",
+            market.key().as_ref(),
+            bettor.key().as_ref(),
+        ],
+        bump = bet.bump,
+    )]
+    pub bet: Account<'info, Bet>,
 }
 
 // ─── Core CPI Logic ────────────────────────────────────────────────
@@ -448,8 +478,9 @@ pub mod fulltime {
             betting_close_time > betting_open_time,
             FullTimeError::InvalidBettingWindow
         );
+        let clock = Clock::get()?;
         require!(
-            betting_open_time > Clock::get()?.unix_timestamp - 3600,
+            betting_open_time > clock.unix_timestamp,
             FullTimeError::BettingCloseTimeInPast
         );
 
@@ -484,7 +515,7 @@ pub mod fulltime {
         Ok(())
     }
 
-    pub fn open_market(ctx: Context<CloseBetting>) -> Result<()> {
+    pub fn open_market(ctx: Context<ManageMarket>) -> Result<()> {
         let market = &mut ctx.accounts.market;
         require!(
             market.status == MarketStatus::Pending,
@@ -572,7 +603,7 @@ pub mod fulltime {
         Ok(())
     }
 
-    pub fn close_betting(ctx: Context<CloseBetting>) -> Result<()> {
+    pub fn close_betting(ctx: Context<ManageMarket>) -> Result<()> {
         let market = &mut ctx.accounts.market;
         require!(
             market.status == MarketStatus::Open,
@@ -752,6 +783,41 @@ pub mod fulltime {
             FullTimeError::InvalidMarketStatus
         );
         market.status = MarketStatus::Cancelled;
+        Ok(())
+    }
+
+    pub fn refund_bet(ctx: Context<RefundBet>) -> Result<()> {
+        let market = &mut ctx.accounts.market;
+        let bet = &ctx.accounts.bet;
+        let bettor = &ctx.accounts.bettor;
+
+        require!(
+            market.status == MarketStatus::Cancelled,
+            FullTimeError::InvalidMarketStatus
+        );
+        require!(!bet.claimed, FullTimeError::AlreadyClaimed);
+
+        let amount = bet.amount;
+
+        // Kurangi pool
+        match bet.option_index {
+            0 => market.pool_home = market.pool_home.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
+            1 => market.pool_draw = market.pool_draw.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
+            2 => market.pool_away = market.pool_away.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
+            _ => return Err(FullTimeError::InvalidOptionIndex.into()),
+        }
+        market.total_pool = market.total_pool.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?;
+
+        // Transfer SOL kembali ke bettor
+        **market.to_account_info().try_borrow_mut_lamports()? = market
+            .to_account_info().lamports()
+            .checked_sub(amount).ok_or(FullTimeError::MathOverflow)?;
+
+        **bettor.to_account_info().try_borrow_mut_lamports()? = bettor
+            .to_account_info().lamports()
+            .checked_add(amount).ok_or(FullTimeError::MathOverflow)?;
+
+        // Bet account auto-closed oleh anchor `close = bettor`
         Ok(())
     }
 }

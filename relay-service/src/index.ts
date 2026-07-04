@@ -55,7 +55,7 @@ async function main() {
     // Initialize settlement worker
     const programId =
       process.env.FULLTIME_PROGRAM_ID ||
-      "6zQK3dYwKp5AKVvknkPLvfxKLZJ1PVaVr393vugtVKQc";
+      "D9NfB9gGqxiDa4JxpYPmTccX6iwXCwys1HzvsWxZSBkh";
 
     const worker = new SettlementWorker(txline, programId);
 

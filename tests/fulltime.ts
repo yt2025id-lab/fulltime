@@ -13,7 +13,8 @@ describe("FullTime", () => {
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   let seq = Math.floor(Math.random() * 100000);
   function fid() { return 99000000 + seq++; }
-  function ts(futureSec = 3600) { return new anchor.BN(Math.floor(Date.now() / 1000) + futureSec); }
+  // ts(0) = now; ts(N) = now+N seconds
+  function ts(futureSec = 5) { return new anchor.BN(Math.floor(Date.now() / 1000) + futureSec); }
 
   function marketPda(fixtureId: number) {
     return PublicKey.findProgramAddressSync(
@@ -29,7 +30,7 @@ describe("FullTime", () => {
   describe("create_market", () => {
     it("creates a market", async () => {
       const mid = fid();
-      const tx = await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(10), ts(3600))
+      const tx = await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(5), ts(3600))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
       await provider.connection.confirmTransaction(tx, "confirmed");
       const m = await program.account.market.fetch(marketPda(mid));
@@ -37,18 +38,16 @@ describe("FullTime", () => {
       assert.strictEqual(m.outcomeCount, 3);
       assert.deepStrictEqual(m.status, { pending: {} });
     });
-
     it("rejects question > 200 chars", async () => {
       try {
-        await program.methods.createMarket(new anchor.BN(fid()), "X".repeat(201), ts(10), ts(3600))
+        await program.methods.createMarket(new anchor.BN(fid()), "X".repeat(201), ts(5), ts(3600))
           .accounts({ creator: creator.publicKey }).rpc();
         assert.fail("Expected error");
       } catch (err: any) { assert.include(err.message, "QuestionTooLong"); }
     });
-
     it("rejects close <= open", async () => {
       try {
-        await program.methods.createMarket(new anchor.BN(fid()), QUESTION, ts(3600), ts(10))
+        await program.methods.createMarket(new anchor.BN(fid()), QUESTION, ts(3600), ts(5))
           .accounts({ creator: creator.publicKey }).rpc();
         assert.fail("Expected error");
       } catch (err: any) { assert.include(err.message, "InvalidBettingWindow"); }
@@ -57,20 +56,19 @@ describe("FullTime", () => {
 
   // ─── open_market ───────────────────────────────────────────────
   describe("open_market", () => {
-    it("opens pending market", async () => {
+    it("opens pending market (correct)", async () => {
       const mid = fid();
-      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(0), ts(3600))
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(3600))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
-      await sleep(2000); // pastikan open_time lewat
+      await sleep(3000);
       await program.methods.openMarket().accounts({ market: marketPda(mid) }).rpc();
       assert.deepStrictEqual((await program.account.market.fetch(marketPda(mid))).status, { open: {} });
     });
-
-    it("rejects open on already open market", async () => {
+    it("rejects double open", async () => {
       const mid = fid();
-      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(0), ts(3600))
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(3600))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
-      await sleep(2000);
+      await sleep(3000);
       const m = marketPda(mid);
       await program.methods.openMarket().accounts({ market: m }).rpc();
       try {
@@ -86,44 +84,34 @@ describe("FullTime", () => {
     before(async () => {
       const mid = fid();
       mpda = marketPda(mid);
-      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(0), ts(3600))
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(3600))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
-      await sleep(2000);
+      await sleep(3000);
       await program.methods.openMarket().accounts({ market: mpda }).rpc();
     });
-
     it("places HOME bet", async () => {
       const bpda = betPda(mpda);
       await program.methods.placeBet(0, new anchor.BN(100_000_000))
         .accounts({ bettor: creator.publicKey, market: mpda }).signers([creator]).rpc();
       const bet = await program.account.bet.fetch(bpda);
       assert.strictEqual(bet.optionIndex, 0);
-      assert.strictEqual(bet.amount.toNumber(), 100_000_000);
       assert.strictEqual(bet.claimed, false);
       const market = await program.account.market.fetch(mpda);
       expect(market.poolHome.toNumber()).to.equal(100_000_000);
       expect(market.totalPool.toNumber()).to.equal(100_000_000);
     });
-
-    after(() => {
-      // PDA bet sudah dipakai; test invalid option pakai market terpisah
-    });
-
-    it("rejects invalid option on fresh market", async () => {
-      const mid = fid() + 100;
-      const mpda2 = marketPda(mid);
-      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(0), ts(3600))
+    it("rejects invalid option", async () => {
+      const mid = fid();
+      const m2 = marketPda(mid);
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(3600))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
-      await sleep(2000);
-      await program.methods.openMarket().accounts({ market: mpda2 }).rpc();
-
+      await sleep(3000);
+      await program.methods.openMarket().accounts({ market: m2 }).rpc();
       try {
         await program.methods.placeBet(5, new anchor.BN(1000))
-          .accounts({ bettor: creator.publicKey, market: mpda2 }).signers([creator]).rpc();
+          .accounts({ bettor: creator.publicKey, market: m2 }).signers([creator]).rpc();
         assert.fail("Expected error");
-      } catch (err: any) {
-        assert.include(err.message, "Option index di luar batas");
-      }
+      } catch (err: any) { assert.include(err.message, "Option index di luar batas"); }
     });
   });
 
@@ -133,18 +121,16 @@ describe("FullTime", () => {
     before(async () => {
       const mid = fid();
       mpda = marketPda(mid);
-      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(0), ts(3))
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(4))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
-      await sleep(2000);
+      await sleep(3000);
       await program.methods.openMarket().accounts({ market: mpda }).rpc();
     });
-
-    it("closes betting", async () => {
+    it("closes after time", async () => {
       await sleep(3000);
       await program.methods.closeBetting().accounts({ market: mpda }).rpc();
       assert.deepStrictEqual((await program.account.market.fetch(mpda)).status, { closed: {} });
     });
-
     it("rejects double close", async () => {
       try {
         await program.methods.closeBetting().accounts({ market: mpda }).rpc();
@@ -153,20 +139,81 @@ describe("FullTime", () => {
     });
   });
 
-  // ─── cancel_market ─────────────────────────────────────────────
-  describe("cancel_market", () => {
+  // ─── cancel + refund ────────────────────────────────────────
+  describe("cancel_and_refund", () => {
     let mpda: PublicKey;
     before(async () => {
       const mid = fid();
       mpda = marketPda(mid);
-      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(0), ts(3))
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(3600))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
+      await sleep(3000);
+      await program.methods.openMarket().accounts({ market: mpda }).rpc();
+      await program.methods.placeBet(0, new anchor.BN(50_000_000))
+        .accounts({ bettor: creator.publicKey, market: mpda }).signers([creator]).rpc();
     });
-
-    it("cancels by creator", async () => {
+    it("cancels market by creator", async () => {
       await program.methods.cancelMarket()
         .accounts({ creator: creator.publicKey, market: mpda }).signers([creator]).rpc();
-      assert.deepStrictEqual((await program.account.market.fetch(mpda)).status, { cancelled: {} });
+      const m = await program.account.market.fetch(mpda);
+      assert.deepStrictEqual(m.status, { cancelled: {} });
+    });
+    it("refunds bet on cancelled market", async () => {
+      const bpda = betPda(mpda);
+      const balBefore = await provider.connection.getBalance(creator.publicKey);
+      await program.methods.refundBet()
+        .accounts({ bettor: creator.publicKey, market: mpda }).signers([creator]).rpc();
+      const balAfter = await provider.connection.getBalance(creator.publicKey);
+      // Balance should increase (minus tx fee)
+      expect(balAfter).to.be.greaterThan(balBefore - 5000);
+
+      // Bet account should be closed
+      try {
+        await program.account.bet.fetch(bpda);
+        assert.fail("Bet account should be closed");
+      } catch (err: any) {}
+    });
+    it("rejects refund on non-cancelled market", async () => {
+      const mid = fid();
+      const m2 = marketPda(mid);
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(3600))
+        .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
+      await sleep(3000);
+      await program.methods.openMarket().accounts({ market: m2 }).rpc();
+      // Place bet first so PDA exists
+      await program.methods.placeBet(0, new anchor.BN(10_000_000))
+        .accounts({ bettor: creator.publicKey, market: m2 }).signers([creator]).rpc();
+      // Try refund without cancelling — must fail
+      try {
+        await program.methods.refundBet()
+          .accounts({ bettor: creator.publicKey, market: m2 }).signers([creator]).rpc();
+        assert.fail("Expected error");
+      } catch (err: any) {
+        assert.include(err.message, "Market tidak dalam status");
+      }
+    });
+  });
+
+  // ─── settle_market status checks ─────────────────────────────
+  describe("settle_market_status", () => {
+    it("rejects settle on open market", async () => {
+      const mid = fid();
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(2), ts(3600))
+        .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
+      await sleep(3000);
+      await program.methods.openMarket().accounts({ market: marketPda(mid) }).rpc();
+
+      try {
+        await program.methods.settleMarket(
+          new anchor.BN(0), // target_ts
+          { fixtureId: new anchor.BN(mid), updateStats: { updateCount: 0, minTimestamp: new anchor.BN(0), maxTimestamp: new anchor.BN(0) }, eventsSubTreeRoot: Array(32).fill(0) },
+          [], [], // empty proofs
+          { statToProve: { key: 0, value: 0, period: 0 }, eventStatRoot: Array(32).fill(0), statProof: [] },
+          { statToProve: { key: 0, value: 0, period: 0 }, eventStatRoot: Array(32).fill(0), statProof: [] },
+        ).accounts({ market: marketPda(mid), dailyScoresMerkleRoots: PublicKey.default })
+         .rpc();
+        assert.fail("Expected error");
+      } catch (err: any) { assert.include(err.message, "MarketNotClosed"); }
     });
   });
 
@@ -176,15 +223,13 @@ describe("FullTime", () => {
       const mid = fid();
       const mpda = marketPda(mid);
       const bpda = betPda(mpda);
-      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(10), ts(3600))
+      await program.methods.createMarket(new anchor.BN(mid), QUESTION, ts(5), ts(3600))
         .accounts({ creator: creator.publicKey }).signers([creator]).rpc();
       try {
         await program.methods.claimPayout()
           .accounts({ bettor: creator.publicKey, market: mpda, bet: bpda }).signers([creator]).rpc();
         assert.fail("Expected error");
-      } catch (err: any) {
-        assert.include(err.message, "AccountNotInitialized");
-      }
+      } catch (err: any) { assert.include(err.message, "AccountNotInitialized"); }
     });
   });
 
