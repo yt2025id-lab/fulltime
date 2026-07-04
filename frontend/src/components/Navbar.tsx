@@ -17,9 +17,9 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link
           to="/"
-          className="text-2xl font-bold tracking-tight hover:text-[#FF1493] transition-colors"
+          className="text-2xl font-bold tracking-tight hover:opacity-80 transition-opacity flex items-center gap-2"
         >
-          FULLTIME
+          <img src="/logo fulltime.png" alt="FullTime" className="h-10 w-auto" />
         </Link>
 
         <div className="flex items-center gap-6">

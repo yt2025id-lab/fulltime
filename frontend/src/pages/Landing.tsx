@@ -5,7 +5,7 @@ export default function Landing() {
     <div className="min-h-screen">
       <nav className="border-b-4 border-black bg-white">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center">
-          <span className="text-2xl font-bold">FULLTIME</span>
+          <img src="/logo fulltime.png" alt="FullTime" className="h-10 w-auto" />
         </div>
       </nav>
 
