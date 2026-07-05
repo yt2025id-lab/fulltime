@@ -1,38 +1,273 @@
-import { Link } from "react-router-dom";
-import Marquee from "../components/Marquee";
-const M1 = ["⚽ 🇦🇷 Argentina","⚽ 🇧🇷 Brazil","⚽ 🇺🇾 Uruguay","⚽ 🇨🇴 Colombia","⚽ 🇪🇨 Ecuador","⚽ 🇵🇾 Paraguay","⚽ 🇨🇱 Chile","⚽ 🇵🇪 Peru"];
-const M2 = ["⚽ 🇫🇷 France","⚽ 🇪🇸 Spain","⚽ 🏴󠁧󠁢󠁥󠁮󠁧󠁿 England","⚽ 🇩🇪 Germany","⚽ 🇵🇹 Portugal","⚽ 🇳🇱 Netherlands","⚽ 🇧🇪 Belgium","⚽ 🇮🇹 Italy"];
-const M3 = ["⚽ 🇭🇷 Croatia","⚽ 🇨🇭 Switzerland","⚽ 🇳🇴 Norway","⚽ 🇦🇹 Austria","⚽ 🇸🇪 Sweden","⚽ 🇩🇰 Denmark","⚽ 🇵🇱 Poland","⚽ 🇹🇷 Turkey"];
-const M4 = ["⚽ 🇯🇵 Japan","⚽ 🇰🇷 South Korea","⚽ 🇸🇦 Saudi Arabia","⚽ 🇦🇺 Australia","⚽ 🇮🇷 Iran","⚽ 🇮🇶 Iraq","⚽ 🇺🇿 Uzbekistan","⚽ 🇯🇴 Jordan"];
-const M5 = ["⚽ 🇲🇦 Morocco","⚽ 🇸🇳 Senegal","⚽ 🇹🇳 Tunisia","⚽ 🇩🇿 Algeria","⚽ 🇪🇬 Egypt","⚽ 🇨🇮 Côte d'Ivoire","⚽ 🇬🇭 Ghana","⚽ 🇨🇲 Cameroon"];
-const M6 = ["⚽ 🇺🇸 USA","⚽ 🇲🇽 Mexico","⚽ 🇨🇦 Canada","⚽ 🇵🇦 Panama","⚽ 🇯🇲 Jamaica","⚽ 🇨🇷 Costa Rica","⚽ 🇳🇿 New Zealand","⚽ 🇿🇦 South Africa"];
-export default function Landing() {
-  return (<div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden">
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#0a0a0f]/80 backdrop-blur-xl"><div className="max-w-7xl mx-auto px-6 h-16 flex items-center"><img src="/logo fulltime.png" alt="FullTime" className="h-8 w-auto" /></div></nav>
-    <section className="relative pt-32 pb-20 px-6 border-b border-white/10 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FF1493]/10 via-transparent to-transparent" />
-      <div className="absolute top-20 right-0 w-96 h-96 bg-[#FF1493]/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#FFD700]/5 rounded-full blur-3xl" />
-      <div className="max-w-5xl mx-auto relative z-10 text-center">
-        <img src="/logo fulltime.png" alt="FullTime" className="h-16 md:h-24 mx-auto mb-8" />
-        <h1 className="text-5xl md:text-8xl font-black leading-none mb-6"><span className="block bg-gradient-to-r from-white via-white to-[#FF1493] bg-clip-text text-transparent">CRYPTO SETTLES.</span><span className="block text-2xl md:text-3xl mt-4 text-white/50 font-bold">NO REFEREE NEEDED.</span></h1>
-        <p className="text-lg text-white/40 max-w-2xl mx-auto mb-10">Prediction market on-chain untuk World Cup 2026. Settlement otomatis diverifikasi kriptografis via Merkle proofs — tanpa admin, tanpa tombol resolve, tanpa kepercayaan.</p>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link to="/markets" className="group relative bg-white text-black text-lg font-black px-8 py-4 rounded-2xl overflow-hidden hover:bg-[#FF1493] hover:text-white transition-all duration-500">EXPLORE MARKETS</Link>
-          <Link to="/admin" className="group relative bg-white/10 text-white text-lg font-black px-8 py-4 rounded-2xl overflow-hidden border border-white/20 hover:bg-white hover:text-black transition-all duration-500">CREATE MARKET</Link>
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import FadingVideo from "../components/FadingVideo";
+import BlurText from "../components/BlurText";
+
+const HERO_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_080021_d598092b-c4c2-4e53-8e46-94cf9064cd50.mp4";
+
+const CAPABILITIES_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_094631_d30ab262-45ee-4b7d-99f3-5d5848c8ef13.mp4";
+
+const ArrowUpRight = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M7 17L17 7" />
+    <path d="M7 7h10v10" />
+  </svg>
+);
+
+const PlayIcon = () => (
+  <svg width={16} height={16} viewBox="0 0 24 24" fill="white">
+    <polygon points="6 4 20 12 6 20 6 4" />
+  </svg>
+);
+
+const fadeIn = {
+  initial: { filter: "blur(10px)", opacity: 0, y: 20 },
+  animate: { filter: "blur(0px)", opacity: 1, y: 0 },
+};
+
+const steps = [
+  { step: "01", title: "Create", desc: "Create a YES/NO prediction market with a question and deadline. Pay a small 2% platform fee." },
+  { step: "02", title: "Bet", desc: "Place SOL bets on YES or NO. All bets are held securely in the smart contract on-chain." },
+  { step: "03", title: "Resolve", desc: "After full-time, TxLINE feeds verify the outcome. CPI Merkle proof settles the market — trustless." },
+  { step: "04", title: "Claim", desc: "Winners claim proportional share of the total pool. Verified on-chain, permanent audit trail on Solana." },
+];
+
+const features = [
+  { title: "Trustless", desc: "TxLINE Merkle proof verification via CPI on-chain. No admin resolve button — cryptographic proof or nothing.", check: true },
+  { title: "Automatic", desc: "SSE real-time listener detects full-time in < 1 second. Markets auto-settle. No polling, no delay.", check: true },
+  { title: "2% Fee", desc: "Market creators pay just 2% of the losing pool as a protocol fee — minimal overhead, transparent, on-chain.", check: true },
+];
+
+const countries = [
+  "🇺🇸 USA", "🇨🇦 Canada", "🇲🇽 Mexico", "🇦🇷 Argentina", "🇧🇷 Brazil",
+  "🏴󠁧󠁢󠁥󠁮󠁧󠁿 England", "🇫🇷 France", "🇩🇪 Germany", "🇪🇸 Spain", "🇳🇱 Netherlands",
+  "🇵🇹 Portugal", "🇺🇾 Uruguay", "🇨🇴 Colombia", "🇯🇵 Japan",
+  "🇰🇷 South Korea", "🇸🇦 Saudi Arabia", "🇦🇺 Australia",
+  "🇲🇦 Morocco", "🇸🇳 Senegal", "🇭🇷 Croatia", "🇧🇪 Belgium",
+  "🇪🇨 Ecuador", "🇨🇮 Ivory Coast", "🇩🇿 Algeria", "🇪🇬 Egypt",
+  "🇬🇭 Ghana", "🇹🇳 Tunisia", "🇿🇦 South Africa", "🇨🇻 Cape Verde",
+  "🇨🇩 Congo DR", "🇧🇦 Bosnia", "🇨🇼 Curaçao", "🇮🇷 Iran",
+  "🇶🇦 Qatar", "🇮🇶 Iraq", "🇯🇴 Jordan", "🇺🇿 Uzbekistan",
+  "🇳🇿 New Zealand", "🇳🇴 Norway", "🇸🇪 Sweden", "🇨🇭 Switzerland",
+  "🇦🇹 Austria", "🇨🇿 Czechia", "🇹🇷 Turkey", "🇵🇾 Paraguay",
+  "🇵🇦 Panama", "🇭🇹 Haiti", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland",
+];
+
+const Marquee = ({ items, reverse }: { items: string[]; reverse?: boolean }) => (
+  <div className="relative z-30 bg-black/60 backdrop-blur-sm border-y border-white/10 py-2.5 overflow-hidden">
+    <div className={`flex animate-marquee whitespace-nowrap ${reverse ? "flex-row-reverse" : ""}`} style={reverse ? { animationDirection: "reverse" } : {}}>
+      {[...Array(2)].map((_, lap) => (
+        <div key={lap} className="flex items-center gap-8 px-4">
+          {items.map((c, i) => (
+            <span key={i}>
+              <span className="text-white/90 font-body text-sm font-medium">{c}</span>
+              {i < items.length - 1 && <span className="text-white/50 ml-8">·</span>}
+            </span>
+          ))}
         </div>
-      </div>
-    </section>
-    <Marquee countries={M1} />
-    <section className="py-24 px-6 border-b border-white/10 relative overflow-hidden"><div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#FF1493]/3 to-transparent" /><div className="max-w-5xl mx-auto relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6">{[{t:"TRUSTLESS",e:"🔐",d:"Settlement diverifikasi via Merkle proof on-chain — tidak ada pihak yang harus dipercaya."},{t:"AUTOMATIC",e:"⚡",d:"Peluit akhir → relay service mendeteksi → settle dalam hitungan detik via SSE stream."},{t:"AUDITABLE",e:"🔍",d:"Setiap settlement meninggalkan jejak permanen di Solana, diverifikasi siapa saja."}].map((f,i)=>(<div key={f.t} className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 hover:border-[#FF1493]/30 transition-all duration-500"><div className="text-4xl mb-4">{f.e}</div><h3 className="text-2xl font-black mb-3">{f.t}</h3><p className="text-white/40 leading-relaxed">{f.d}</p></div>))}</div></section>
-    <Marquee countries={M2} reverse />
-    <section className="py-24 px-6 border-b border-white/10"><div className="max-w-5xl mx-auto"><h2 className="text-4xl md:text-5xl font-black text-center mb-4">HOW <span className="bg-gradient-to-r from-[#FFD700] to-[#FF1493] bg-clip-text text-transparent">IT WORKS</span></h2><p className="text-center text-white/40 text-lg mb-16">From whistle to wallet — fully automated, cryptographically verified</p><div className="grid grid-cols-1 md:grid-cols-5 gap-4">{[{s:"1",i:"🏟️",t:"KICKOFF",d:"Match dimulai. Bettors pasang taruhan HOME/DRAW/AWAY"},{s:"2",i:"⏱️",t:"FULL TIME",d:"TxLINE mendeteksi phase F melalui live data feed"},{s:"3",i:"🔗",t:"MERKLE PROOF",d:"TxLINE generates cryptographic proof ke on-chain"},{s:"4",i:"⛓️",t:"CPI VERIFY",d:"FullTime contract verifies proof via CPI ke TxLINE"},{s:"5",i:"💰",t:"SETTLE",d:"Market auto-settled. Pemenang klaim payout."}].map((w)=>(<div key={w.s} className="group bg-white/5 border border-white/10 rounded-2xl p-6 text-center hover:border-[#FFD700]/30 transition-all duration-500"><div className="text-3xl mb-2">{w.i}</div><div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#FFD700] to-[#FF1493] flex items-center justify-center mx-auto mb-2 font-black text-sm text-black">{w.s}</div><h4 className="font-black text-sm mb-1">{w.t}</h4><p className="text-xs text-white/30">{w.d}</p></div>))}</div></div></section>
-    <Marquee countries={M3} />
-    <section className="py-24 px-6 border-b border-white/10"><div className="max-w-4xl mx-auto"><h2 className="text-4xl md:text-5xl font-black text-center mb-4">WHY <span className="bg-gradient-to-r from-[#FF1493] to-[#FFD700] bg-clip-text text-transparent">FULLTIME</span> WINS</h2><p className="text-center text-white/40 text-lg mb-16">No contest.</p><div className="border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm"><table className="w-full text-left"><thead><tr className="bg-white/5"><th className="p-4 font-black text-sm">FEATURE</th><th className="p-4 font-black text-sm border-l border-white/10 bg-[#FF1493]/10 text-[#FF1493]">FULLTIME</th><th className="p-4 font-black text-sm border-l border-white/10">TRADITIONAL</th></tr></thead><tbody className="divide-y divide-white/10">{[["Settlement","Auto < 1 detik","Manual admin klik"],["Verifikasi","Merkle proof on-chain","Trust-based"],["Audit Trail","Permanent di Solana","Tidak ada"],["Data Source","TxLINE verified","Manual/Web scraping"],["Censorship","Permissionless","Admin kontrol"],["Latency","SSE real-time","Polling 2-5 menit"]].map(([f,ft,tr],i)=>(<tr key={f} className={i%2===0?"bg-white/[0.02]":""}><td className="p-4 font-bold text-sm">{f}</td><td className="p-4 text-sm bg-[#FF1493]/5 border-l border-white/10 text-green-400 font-bold">{ft}</td><td className="p-4 text-sm border-l border-white/10 text-red-400">{tr}</td></tr>))}</tbody></table></div></div></section>
-    <Marquee countries={M4} reverse />
-    <Marquee countries={M5} />
-    <section className="py-24 px-6 relative overflow-hidden"><div className="absolute inset-0 bg-gradient-to-t from-[#FF1493]/10 via-transparent to-transparent" /><div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#FF1493]/10 rounded-full blur-3xl" /><div className="max-w-3xl mx-auto relative z-10 text-center"><h2 className="text-4xl md:text-5xl font-black mb-6">READY TO <span className="bg-gradient-to-r from-[#FFD700] to-[#FF1493] bg-clip-text text-transparent">SETTLE</span>?</h2><p className="text-xl text-white/40 mb-10">World Cup 2026 sedang berlangsung. Buat market, pasang taruhan, biarkan blockchain bekerja.</p><div className="flex gap-4 justify-center"><Link to="/markets" className="bg-white text-black text-lg font-black px-8 py-4 rounded-2xl hover:bg-[#FF1493] hover:text-white transition-all duration-500">EXPLORE MARKETS</Link><Link to="/admin" className="bg-white/10 text-white text-lg font-black px-8 py-4 rounded-2xl border border-white/20 hover:bg-white hover:text-black transition-all duration-500">CREATE MARKET</Link></div></div></section>
-    <Marquee countries={M6} reverse />
-    <footer className="py-8 border-t border-white/10 text-center"><p className="text-sm text-white/20">FullTime — Built on Solana. Powered by TxLINE. World Cup 2026.</p><p className="text-xs text-white/10 mt-1">TxODDS x Solana x Superteam Earn Hackathon · Prediction Markets & Settlement</p></footer>
-  </div>);
+      ))}
+    </div>
+  </div>
+);
+
+const chunkSize = Math.ceil(countries.length / 6);
+const c1 = countries.slice(0, chunkSize);
+const c2 = countries.slice(chunkSize, chunkSize * 2);
+const c3 = countries.slice(chunkSize * 2, chunkSize * 3);
+const c4 = countries.slice(chunkSize * 3, chunkSize * 4);
+const c5 = countries.slice(chunkSize * 4, chunkSize * 5);
+const c6 = countries.slice(chunkSize * 5);
+
+export default function Landing() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="bg-green-950">
+      {/* Hero Section */}
+      <section className="relative h-screen overflow-hidden bg-green-950">
+        <Marquee items={c1} />
+
+        <FadingVideo
+          src={HERO_VIDEO}
+          className="absolute left-1/2 top-0 -translate-x-1/2 object-cover object-top z-0"
+          style={{ width: "120%", height: "120%" }}
+        />
+
+        <div className="relative z-10 flex flex-col h-full">
+          <div className="flex-1 flex flex-col items-center justify-start text-center px-4 pt-12">
+            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-black/20 to-black/40 pointer-events-none" />
+
+            <motion.div
+              {...fadeIn}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+              className="flex flex-col items-center gap-5 mb-14 relative"
+            >
+              <span className="bg-amber-500 text-black rounded-full px-5 py-2 text-xl md:text-2xl font-bold font-body tracking-wider uppercase shadow-lg shadow-amber-500/40">
+                FIFA World Cup 2026
+              </span>
+              <p className="text-xl md:text-2xl text-amber-200 font-body font-semibold tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                Predict. Bet. Win.
+              </p>
+            </motion.div>
+
+            <BlurText
+              text="Predict the World Cup. Win on Solana."
+              className="text-8xl md:text-9xl lg:text-[7rem] font-heading italic text-white leading-[0.85] max-w-4xl tracking-[-4px] relative drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]"
+              delay={0.1}
+            />
+
+            <motion.p
+              {...fadeIn}
+              transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+              className="mt-10 text-lg md:text-xl text-white max-w-2xl font-body font-medium leading-relaxed relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            >
+              A trustless prediction market powered by Solana + TxLINE — Merkle-proof settlement on-chain, no referee needed.
+            </motion.p>
+
+            <motion.div
+              {...fadeIn}
+              transition={{ duration: 0.8, delay: 1.1, ease: "easeOut" }}
+              className="flex items-center gap-10 mt-12 relative"
+            >
+              <button
+                onClick={() => navigate("/app")}
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black rounded-full px-7 py-3.5 text-lg font-bold flex items-center gap-2 font-body transition-all shadow-lg shadow-amber-500/30"
+              >
+                Launch dApp <ArrowUpRight />
+              </button>
+              <a href="#how" className="text-lg text-white flex items-center gap-1.5 font-body font-medium hover:text-amber-300 transition-colors drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                <PlayIcon /> How It Works
+              </a>
+            </motion.div>
+
+            <motion.p
+              {...fadeIn}
+              transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
+              className="mt-14 text-sm text-white/50 font-body font-light tracking-wide relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+            >
+              TxODDS x Solana x Superteam Earn · Prediction Markets & Settlement · July 2026
+            </motion.p>
+          </div>
+        </div>
+      </section>
+
+      <Marquee items={c2} reverse />
+
+      {/* How It Works */}
+      <section id="how" className="relative min-h-screen bg-emerald-950 overflow-hidden">
+        <FadingVideo
+          src={CAPABILITIES_VIDEO}
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        />
+
+        <div className="relative z-10 px-8 md:px-16 lg:px-20 pt-24 pb-10 flex flex-col min-h-screen">
+          <div className="mb-auto">
+            <p className="text-sm font-body text-amber-300/80 mb-6">// How It Works</p>
+            <h2 className="font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-3px]">
+              Predict. Bet.
+              <br />
+              Claim.
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-16">
+            {steps.map((s, i) => (
+              <motion.div
+                key={s.step}
+                initial={{ filter: "blur(10px)", opacity: 0, y: 30 }}
+                whileInView={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: i * 0.15, ease: "easeOut" }}
+                className="liquid-glass rounded-[1.25rem] p-6 min-h-[360px] flex flex-col"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-white/30 font-heading italic text-4xl tracking-[-1px]">{s.step}</span>
+                </div>
+                <div className="flex-1" />
+                <div className="mt-6">
+                  <h3 className="font-heading italic text-white text-3xl md:text-4xl tracking-[-1px] leading-none">
+                    {s.title}
+                  </h3>
+                  <p className="mt-3 text-sm text-white/80 font-body font-light leading-snug max-w-[32ch]">
+                    {s.desc}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Marquee items={c3} />
+
+      {/* Why FullTime / Features */}
+      <section id="features" className="relative min-h-screen bg-green-950 overflow-hidden">
+        <FadingVideo
+          src={HERO_VIDEO}
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          style={{ opacity: 0.5 }}
+        />
+
+        <div className="relative z-10 px-8 md:px-16 lg:px-20 pt-24 pb-10 flex flex-col min-h-screen">
+          <div className="mb-auto">
+            <p className="text-sm font-body text-amber-300/80 mb-6">// Why FullTime</p>
+            <h2 className="font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-3px]">
+              On-Chain
+              <br />
+              Prediction
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+            {features.map((f, i) => (
+              <motion.div
+                key={f.title}
+                initial={{ filter: "blur(10px)", opacity: 0, y: 30 }}
+                whileInView={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: i * 0.15, ease: "easeOut" }}
+                className="liquid-glass-strong rounded-[1.25rem] p-8 min-h-[320px] flex flex-col"
+              >
+                {f.check && (
+                  <div className="liquid-glass w-10 h-10 rounded-full flex items-center justify-center mb-6">
+                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                )}
+                <h3 className="font-heading italic text-white text-3xl md:text-4xl tracking-[-1px] leading-none mt-auto">
+                  {f.title}
+                </h3>
+                <p className="mt-3 text-sm text-white/80 font-body font-light leading-snug">
+                  {f.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Marquee items={c4} reverse />
+      <Marquee items={c5} />
+      <Marquee items={c6} reverse />
+
+      {/* Footer */}
+      <footer className="relative bg-green-950 border-t border-white/5 px-8 py-8">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
+          <button
+            onClick={() => navigate("/app")}
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black rounded-full px-7 py-3 text-base font-bold flex items-center gap-2 font-body transition-all shadow-lg shadow-amber-500/30"
+          >
+            Launch dApp <ArrowUpRight />
+          </button>
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-sm text-white/40 font-body">FullTime — Built on Solana. Powered by TxLINE.</span>
+            <span className="text-xs text-white/30 font-body">TxODDS x Solana x Superteam Earn Hackathon · {new Date().getFullYear()}</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }

@@ -2,14 +2,11 @@ use anchor_lang::prelude::*;
 
 declare_id!("58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x");
 
-// ─── Constants ────────────────────────────────────────────────────
 const DISPUTE_WINDOW_SECONDS: i64 = 3600;
 const PLATFORM_FEE_BPS: u16 = 200;
 
-/// TxLINE Txoracle Program ID (devnet)
 const TXLINE_TXORACLE_ID: Pubkey = pubkey!("6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J");
 
-/// Discriminator untuk `validate_stat` instruction (IDL txoracle v1.4.2)
 const VALIDATE_STAT_DISCRIMINATOR: [u8; 8] = [107, 197, 232, 90, 191, 136, 105, 185];
 
 // ─── State ─────────────────────────────────────────────────────────
@@ -19,15 +16,15 @@ pub struct Market {
     pub fixture_id: u64,
     pub question: String,          // max 200 chars
     pub creator: Pubkey,
-    pub outcome_count: u8,         // 3 (Home/Draw/Away)
+    pub outcome_count: u8,         // 2 (YES/NO binary)
     pub total_pool: u64,
-    pub pool_home: u64,
-    pub pool_draw: u64,
-    pub pool_away: u64,
+    pub pool_yes: u64,
+    pub pool_no: u64,
     pub betting_open_time: i64,
     pub betting_close_time: i64,
     pub status: MarketStatus,
-    pub winning_option: u8,        // 0=HOME, 1=DRAW, 2=AWAY, 255=unset
+    pub winning_option: u8,        // 0=YES, 1=NO, 255=unset
+    pub is_trustless: bool,        // true = TxLINE CPI settlement, false = manual creator resolve
     pub settlement_root: Pubkey,
     pub settlement_epoch_day: u16,
     pub settlement_ts: i64,
@@ -43,13 +40,13 @@ impl Market {
         + 32  // creator
         + 1   // outcome_count
         + 8   // total_pool
-        + 8   // pool_home
-        + 8   // pool_draw
-        + 8   // pool_away
+        + 8   // pool_yes
+        + 8   // pool_no
         + 8   // betting_open_time
         + 8   // betting_close_time
         + 1   // status (enum discriminant)
         + 1   // winning_option
+        + 1   // is_trustless
         + 32  // settlement_root
         + 2   // settlement_epoch_day
         + 8   // settlement_ts
@@ -62,20 +59,14 @@ impl Market {
 pub struct Bet {
     pub market: Pubkey,
     pub bettor: Pubkey,
-    pub option_index: u8,
+    pub option_index: u8,          // 0=YES, 1=NO
     pub amount: u64,
     pub claimed: bool,
     pub bump: u8,
 }
 
 impl Bet {
-    pub const LEN: usize = 8  // discriminator
-        + 32  // market
-        + 32  // bettor
-        + 1   // option_index
-        + 8   // amount
-        + 1   // claimed
-        + 1;  // bump
+    pub const LEN: usize = 8 + 32 + 32 + 1 + 8 + 1 + 1;
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug)]
@@ -87,7 +78,7 @@ pub enum MarketStatus {
     Cancelled,
 }
 
-// ─── TxLINE CPI Types (matching IDL txoracle v1.4.2) ──────────────
+// ─── TxLINE CPI Types ──────────────────────────────────────────────
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct ProofNode {
@@ -145,6 +136,7 @@ pub struct MarketCreated {
     pub creator: Pubkey,
     pub question: String,
     pub betting_close_time: i64,
+    pub is_trustless: bool,
 }
 
 #[event]
@@ -153,6 +145,7 @@ pub struct BetPlaced {
     pub bettor: Pubkey,
     pub option_index: u8,
     pub amount: u64,
+    pub side: bool,
 }
 
 #[event]
@@ -160,10 +153,18 @@ pub struct MarketSettled {
     pub market: Pubkey,
     pub fixture_id: u64,
     pub winning_option: u8,
-    pub home_goals: i32,
-    pub away_goals: i32,
+    pub winning_side: bool,
     pub settlement_root: Pubkey,
 }
+
+#[event]
+pub struct MarketResolved {
+    pub market: Pubkey,
+    pub creator: Pubkey,
+    pub outcome: bool,
+}
+
+
 
 #[event]
 pub struct PayoutClaimed {
@@ -176,42 +177,48 @@ pub struct PayoutClaimed {
 
 #[error_code]
 pub enum FullTimeError {
-    #[msg("Question terlalu panjang (max 200 karakter)")]
+    #[msg("Question too long (max 200 chars)")]
     QuestionTooLong,
-    #[msg("Betting close time harus di masa depan")]
+    #[msg("Betting close time must be in the future")]
     BettingCloseTimeInPast,
-    #[msg("Betting close time harus setelah open time")]
+    #[msg("Betting close time must be after open time")]
     InvalidBettingWindow,
-    #[msg("Market belum open")]
+    #[msg("Market not open")]
     MarketNotOpen,
-    #[msg("Betting window sudah tutup")]
+    #[msg("Betting window is closed")]
     BettingClosed,
-    #[msg("Option index di luar batas (0=HOME, 1=DRAW, 2=AWAY)")]
+    #[msg("Invalid option (0=YES, 1=NO)")]
     InvalidOptionIndex,
-    #[msg("Market belum closed, tidak bisa di-settle")]
+    #[msg("Market must be Closed to settle/resolve")]
     MarketNotClosed,
-    #[msg("Market sudah di-settle")]
+    #[msg("Market already settled")]
     MarketAlreadySettled,
-    #[msg("Market tidak dalam status yang benar")]
+    #[msg("Invalid market status for this operation")]
     InvalidMarketStatus,
-    #[msg("Belum waktunya klaim — market belum settled atau still disputed")]
+    #[msg("Claim not available")]
     ClaimNotAvailable,
-    #[msg("Bet ini sudah diklaim")]
+    #[msg("Already claimed")]
     AlreadyClaimed,
-    #[msg("Opsi yang dipilih bukan pemenang")]
+    #[msg("Your bet is not the winning option")]
     NotWinner,
-    #[msg("Hanya creator market yang bisa cancel")]
+    #[msg("Only the market creator can perform this")]
     UnauthorizedCancel,
-    #[msg("Verifikasi Merkle proof gagal — stat tidak valid atau fixture salah")]
+    #[msg("Merkle proof verification failed")]
     MerkleVerificationFailed,
-    #[msg("Stat value tidak valid (harus >= 0)")]
+    #[msg("Invalid stat value")]
     InvalidStatValue,
-    #[msg("Jumlah bet harus > 0")]
+    #[msg("Bet amount must be > 0")]
     InsufficientFunds,
     #[msg("Arithmetic overflow")]
     MathOverflow,
-    #[msg("Daily scores roots PDA tidak dikenali")]
+    #[msg("Invalid daily scores roots PDA")]
     InvalidDailyScoresRoots,
+    #[msg("Only trustless markets can use TxLINE settlement")]
+    NotTrustlessMarket,
+    #[msg("Only manual markets can use resolve_market")]
+    NotManualMarket,
+    #[msg("Fixture ID required for trustless markets")]
+    FixtureIdRequired,
 }
 
 // ─── Contexts ──────────────────────────────────────────────────────
@@ -301,9 +308,27 @@ pub struct SettleMarket<'info> {
     )]
     pub market: Account<'info, Market>,
 
-    /// CHECK: Akun PDA daily_scores_roots milik TxLINE program —
-    /// diverifikasi seed-nya di instruksi, bukan di derive macro
+    /// CHECK: PDA daily_scores_roots
     pub daily_scores_merkle_roots: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ResolveMarket<'info> {
+    #[account(mut)]
+    pub creator: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [
+            b"market",
+            crate::id().as_ref(),
+            market.creator.as_ref(),
+            &market.fixture_id.to_le_bytes(),
+        ],
+        bump = market.bump,
+        constraint = market.creator == creator.key() @ FullTimeError::UnauthorizedCancel,
+    )]
+    pub market: Account<'info, Market>,
 }
 
 #[derive(Accounts)]
@@ -386,10 +411,6 @@ pub struct RefundBet<'info> {
 
 // ─── Core CPI Logic ────────────────────────────────────────────────
 
-/// Melakukan CPI call ke TxLINE `validate_stat` untuk verifikasi satu stat.
-///
-/// Returns: `Ok(())` jika stat valid dan predicate terpenuhi.
-/// Errors: propagates CPI error jika Merkle proof gagal atau predicate tidak terpenuhi.
 fn verify_stat(
     target_ts: i64,
     fixture_summary: &ScoresBatchSummary,
@@ -399,7 +420,7 @@ fn verify_stat(
     daily_scores_merkle_roots: &AccountInfo,
 ) -> Result<()> {
     let predicate = TraderPredicate {
-        threshold: -1, // lolos jika value > -1 (selalu true utk gol >= 0)
+        threshold: -1,
         comparison: Comparison::GreaterThan,
     };
 
@@ -407,12 +428,10 @@ fn verify_stat(
     data.extend_from_slice(&VALIDATE_STAT_DISCRIMINATOR);
     data.extend_from_slice(&target_ts.to_le_bytes());
 
-    // Serialize fixture_summary (Borsh-serialized struct)
     let mut fsa = Vec::new();
     fixture_summary.serialize(&mut fsa)?;
     data.extend_from_slice(&fsa);
 
-    // Serialize fixture_proof (Vec<ProofNode> — 4-byte Borsh len prefix)
     let mut fpa = Vec::new();
     (fixture_proof.len() as u32).serialize(&mut fpa)?;
     for node in fixture_proof {
@@ -420,7 +439,6 @@ fn verify_stat(
     }
     data.extend_from_slice(&fpa);
 
-    // Serialize main_tree_proof
     let mut mta = Vec::new();
     (main_tree_proof.len() as u32).serialize(&mut mta)?;
     for node in main_tree_proof {
@@ -428,16 +446,12 @@ fn verify_stat(
     }
     data.extend_from_slice(&mta);
 
-    // predicate (TraderPredicate)
     predicate.serialize(&mut data)?;
-
-    // stat_a (the stat we're proving)
     stat.serialize(&mut data)?;
 
-    // stat_b = None (Option<StatTerm>)
+    // stat_b = None
     data.push(0u8);
-
-    // op = None (Option<BinaryExpression>)
+    // op = None
     data.push(0u8);
 
     let daily_meta = anchor_lang::solana_program::instruction::AccountMeta::new_readonly(
@@ -469,6 +483,7 @@ pub mod fulltime {
         question: String,
         betting_open_time: i64,
         betting_close_time: i64,
+        is_trustless: bool,
     ) -> Result<()> {
         require!(
             question.len() <= 200,
@@ -484,19 +499,23 @@ pub mod fulltime {
             FullTimeError::BettingCloseTimeInPast
         );
 
+        if is_trustless {
+            require!(fixture_id > 0, FullTimeError::FixtureIdRequired);
+        }
+
         let market = &mut ctx.accounts.market;
         market.fixture_id = fixture_id;
         market.question = question.clone();
         market.creator = ctx.accounts.creator.key();
-        market.outcome_count = 3;
+        market.outcome_count = 2;
         market.total_pool = 0;
-        market.pool_home = 0;
-        market.pool_draw = 0;
-        market.pool_away = 0;
+        market.pool_yes = 0;
+        market.pool_no = 0;
         market.betting_open_time = betting_open_time;
         market.betting_close_time = betting_close_time;
         market.status = MarketStatus::Pending;
         market.winning_option = 255;
+        market.is_trustless = is_trustless;
         market.settlement_root = Pubkey::default();
         market.settlement_epoch_day = 0;
         market.settlement_ts = 0;
@@ -510,6 +529,7 @@ pub mod fulltime {
             creator: ctx.accounts.creator.key(),
             question,
             betting_close_time,
+            is_trustless,
         });
 
         Ok(())
@@ -517,10 +537,7 @@ pub mod fulltime {
 
     pub fn open_market(ctx: Context<ManageMarket>) -> Result<()> {
         let market = &mut ctx.accounts.market;
-        require!(
-            market.status == MarketStatus::Pending,
-            FullTimeError::InvalidMarketStatus
-        );
+        require!(market.status == MarketStatus::Pending, FullTimeError::InvalidMarketStatus);
         market.status = MarketStatus::Open;
         Ok(())
     }
@@ -533,20 +550,12 @@ pub mod fulltime {
         let market = &mut ctx.accounts.market;
         let bettor = &ctx.accounts.bettor;
 
-        require!(
-            market.status == MarketStatus::Open,
-            FullTimeError::MarketNotOpen
-        );
-        require!(
-            Clock::get()?.unix_timestamp < market.betting_close_time,
-            FullTimeError::BettingClosed
-        );
-        require!(
-            option_index < market.outcome_count,
-            FullTimeError::InvalidOptionIndex
-        );
+        require!(market.status == MarketStatus::Open, FullTimeError::MarketNotOpen);
+        require!(Clock::get()?.unix_timestamp < market.betting_close_time, FullTimeError::BettingClosed);
+        require!(option_index < market.outcome_count, FullTimeError::InvalidOptionIndex);
         require!(amount > 0, FullTimeError::InsufficientFunds);
 
+        // option_index: 0 = YES, 1 = NO
         anchor_lang::system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -565,20 +574,14 @@ pub mod fulltime {
 
         match option_index {
             0 => {
-                market.pool_home = market
-                    .pool_home
+                market.pool_yes = market
+                    .pool_yes
                     .checked_add(amount)
                     .ok_or(FullTimeError::MathOverflow)?;
             }
             1 => {
-                market.pool_draw = market
-                    .pool_draw
-                    .checked_add(amount)
-                    .ok_or(FullTimeError::MathOverflow)?;
-            }
-            2 => {
-                market.pool_away = market
-                    .pool_away
+                market.pool_no = market
+                    .pool_no
                     .checked_add(amount)
                     .ok_or(FullTimeError::MathOverflow)?;
             }
@@ -598,6 +601,7 @@ pub mod fulltime {
             bettor: bettor.key(),
             option_index,
             amount,
+            side: option_index == 0,
         });
 
         Ok(())
@@ -605,14 +609,8 @@ pub mod fulltime {
 
     pub fn close_betting(ctx: Context<ManageMarket>) -> Result<()> {
         let market = &mut ctx.accounts.market;
-        require!(
-            market.status == MarketStatus::Open,
-            FullTimeError::InvalidMarketStatus
-        );
-        require!(
-            Clock::get()?.unix_timestamp >= market.betting_close_time,
-            FullTimeError::InvalidMarketStatus
-        );
+        require!(market.status == MarketStatus::Open, FullTimeError::InvalidMarketStatus);
+        require!(Clock::get()?.unix_timestamp >= market.betting_close_time, FullTimeError::InvalidMarketStatus);
         market.status = MarketStatus::Closed;
         Ok(())
     }
@@ -633,14 +631,16 @@ pub mod fulltime {
             FullTimeError::MarketNotClosed
         );
 
-        // Verifikasi fixture_id cocok
+        require!(
+            market.is_trustless,
+            FullTimeError::NotTrustlessMarket
+        );
+
         require!(
             fixture_summary.fixture_id as u64 == market.fixture_id,
             FullTimeError::MerkleVerificationFailed
         );
 
-        // Verifikasi daily_scores_merkle_roots adalah PDA valid dari TxLINE
-        // target_ts dalam MILLISECONDS (format TxLINE) → epoch_day = ms / 86400000
         let epoch_day = ((target_ts / 86400000) as u16).to_le_bytes();
         let (expected_pda, _bump) = Pubkey::find_program_address(
             &[b"daily_scores_roots", &epoch_day],
@@ -651,7 +651,6 @@ pub mod fulltime {
             FullTimeError::InvalidDailyScoresRoots
         );
 
-        // CPI #1: verifikasi stat_a (HOME goals, key=1)
         verify_stat(
             target_ts,
             &fixture_summary,
@@ -661,7 +660,6 @@ pub mod fulltime {
             &ctx.accounts.daily_scores_merkle_roots,
         )?;
 
-        // CPI #2: verifikasi stat_b (AWAY goals, key=2)
         verify_stat(
             target_ts,
             &fixture_summary,
@@ -671,20 +669,13 @@ pub mod fulltime {
             &ctx.accounts.daily_scores_merkle_roots,
         )?;
 
-        // Tentukan pemenang
         let home_goals = stat_a.stat_to_prove.value;
         let away_goals = stat_b.stat_to_prove.value;
 
         require!(home_goals >= 0, FullTimeError::InvalidStatValue);
         require!(away_goals >= 0, FullTimeError::InvalidStatValue);
 
-        let winning_option = if home_goals > away_goals {
-            0u8
-        } else if home_goals == away_goals {
-            1u8
-        } else {
-            2u8
-        };
+        let winning_option = if home_goals > away_goals { 0u8 } else { 1u8 };
 
         let now = Clock::get()?.unix_timestamp;
         market.status = MarketStatus::Settled;
@@ -700,9 +691,34 @@ pub mod fulltime {
             market: market.key(),
             fixture_id: market.fixture_id,
             winning_option,
-            home_goals,
-            away_goals,
+            winning_side: winning_option == 0,
             settlement_root: ctx.accounts.daily_scores_merkle_roots.key(),
+        });
+
+        Ok(())
+    }
+
+    pub fn resolve_market(
+        ctx: Context<ResolveMarket>,
+        outcome: bool,
+    ) -> Result<()> {
+        let market = &mut ctx.accounts.market;
+
+        require!(!market.is_trustless, FullTimeError::NotManualMarket);
+        require!(market.status == MarketStatus::Closed, FullTimeError::MarketNotClosed);
+
+        let now = Clock::get()?.unix_timestamp;
+        market.status = MarketStatus::Settled;
+        market.winning_option = if outcome { 0u8 } else { 1u8 };
+        market.settlement_ts = now;
+        market.dispute_until = now
+            .checked_add(DISPUTE_WINDOW_SECONDS)
+            .ok_or(FullTimeError::MathOverflow)?;
+
+        emit!(MarketResolved {
+            market: market.key(),
+            creator: ctx.accounts.creator.key(),
+            outcome,
         });
 
         Ok(())
@@ -713,20 +729,13 @@ pub mod fulltime {
         let bet = &mut ctx.accounts.bet;
         let bettor = &ctx.accounts.bettor;
 
-        require!(
-            market.status == MarketStatus::Settled,
-            FullTimeError::ClaimNotAvailable
-        );
+        require!(market.status == MarketStatus::Settled, FullTimeError::ClaimNotAvailable);
         require!(!bet.claimed, FullTimeError::AlreadyClaimed);
-        require!(
-            bet.option_index == market.winning_option,
-            FullTimeError::NotWinner
-        );
+        require!(bet.option_index == market.winning_option, FullTimeError::NotWinner);
 
         let winning_pool = match market.winning_option {
-            0 => market.pool_home,
-            1 => market.pool_draw,
-            2 => market.pool_away,
+            0 => market.pool_yes,
+            1 => market.pool_no,
             _ => return Err(FullTimeError::MathOverflow.into()),
         };
 
@@ -792,24 +801,18 @@ pub mod fulltime {
         let bet = &ctx.accounts.bet;
         let bettor = &ctx.accounts.bettor;
 
-        require!(
-            market.status == MarketStatus::Cancelled,
-            FullTimeError::InvalidMarketStatus
-        );
+        require!(market.status == MarketStatus::Cancelled, FullTimeError::InvalidMarketStatus);
         require!(!bet.claimed, FullTimeError::AlreadyClaimed);
 
         let amount = bet.amount;
 
-        // Kurangi pool
         match bet.option_index {
-            0 => market.pool_home = market.pool_home.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
-            1 => market.pool_draw = market.pool_draw.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
-            2 => market.pool_away = market.pool_away.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
+            0 => market.pool_yes = market.pool_yes.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
+            1 => market.pool_no = market.pool_no.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?,
             _ => return Err(FullTimeError::InvalidOptionIndex.into()),
         }
         market.total_pool = market.total_pool.checked_sub(amount).ok_or(FullTimeError::MathOverflow)?;
 
-        // Transfer SOL kembali ke bettor
         **market.to_account_info().try_borrow_mut_lamports()? = market
             .to_account_info().lamports()
             .checked_sub(amount).ok_or(FullTimeError::MathOverflow)?;
@@ -818,7 +821,6 @@ pub mod fulltime {
             .to_account_info().lamports()
             .checked_add(amount).ok_or(FullTimeError::MathOverflow)?;
 
-        // Bet account auto-closed oleh anchor `close = bettor`
         Ok(())
     }
 }

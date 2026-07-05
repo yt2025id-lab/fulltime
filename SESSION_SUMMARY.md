@@ -2,7 +2,7 @@
 **Author:** Achmad Fauzan Ashari (Ozan_OnChain)
 **Hackathon:** TxODDS x Solana x Superteam Earn — World Cup 2026
 **Track:** Prediction Markets & Settlement ($18,000)
-**Date:** 4 Juli 2026
+**Date:** 4 Juli 2026 (Updated: Landing page Mindloop redesign, Vercel SSO fix, E2E tests #2-3)
 **Deadline:** 19 Juli 2026 | **Pengumuman:** 29 Juli 2026
 
 ---
@@ -130,19 +130,32 @@ fulltime/
 - **@coral-xyz/anchor** client with full IDL
 - **Neo-brutalism aesthetic**: thick borders (`border-4`), solid shadows (`shadow-[6px_6px_0px_#000]`), bold typography, high contrast colors
 
-### Landing Page Sections (Championship-Level)
-1. **Hero** — Logo bounce-in animation + tagline "CRYPTO SETTLES. NO REFEREE NEEDED."
-2. **Marquee 1** — ⚽ South America: 🇦🇷 🇧🇷 🇺🇾 🇨🇴 🇪🇨 🇵🇾 🇨🇱 🇵🇪
-3. **Features** — Trustless · Automatic · Auditable (3 cards with emoji icons)
-4. **Marquee 2** — ⚽ Europe: 🇫🇷 🇪🇸 🇩🇪 🇵🇹 🇳🇱 🇧🇪 🇮🇹 (reverse)
-5. **How It Works** — 5-step dark theme: Kickoff → Full Time → Merkle Proof → CPI Verify → Settle & Claim
-6. **Marquee 3** — ⚽ More Europe: 🇭🇷 🇨🇭 🇳🇴 🇦🇹 🇸🇪 🇩🇰 🇵🇱 🇹🇷
-7. **Comparison Table** — 6 feature rows: FullTime (green) vs Traditional (red)
-8. **Marquee 4** — ⚽ Asia: 🇯🇵 🇰🇷 🇸🇦 🇦🇺 🇮🇷 🇮🇶 🇺🇿 🇯🇴
-9. **Marquee 5** — ⚽ Africa: 🇲🇦 🇸🇳 🇹🇳 🇩🇿 🇪🇬 🇨🇮 🇬🇭 🇨🇲
-10. **CTA Section** — Explore Markets + Create Market buttons
-11. **Marquee 6** — ⚽ CONCACAF: 🇺🇸 🇲🇽 🇨🇦 🇵🇦 🇯🇲 🇨🇷 🇳🇿 🇿🇦
-12. **Footer** — Hackathon info
+### Landing Page Evolution
+- **v1**: Neo-brutalism white theme, thick black borders, solid shadows
+- **v2 (Championship)**: Added 40+ country flag marquees, comparison table, 5-step flow
+- **v3 (Mindloop Final)**: Dark theme `#0a0a0f`, glass morphic cards, gradient text, blur orbs
+
+### Landing Page Sections (Mindloop Dark Theme — Final Version)
+1. **Hero** — Dark gradient bg with pink/yellow blur orbs, gradient text, glass-morphic buttons
+2. **Marquee 1** — ⚽ South America (white/bold on dark bg, 30s loop)
+3. **Features** — 3 glass-morphic cards (Trustless/Automatic/Auditable), border glow on hover
+4. **Marquee 2** — ⚽ Europe (reverse)
+5. **How It Works** — 5-step cards with gradient number badges
+6. **Marquee 3** — ⚽ More Europe
+7. **Comparison Table** — FullTime (green) vs Traditional (red), glass bg
+8. **Marquee 4** — ⚽ Asia (reverse)
+9. **Marquee 5** — ⚽ Africa
+10. **CTA** — Gradient orb + buttons
+11. **Marquee 6** — ⚽ CONCACAF (reverse)
+12. **Footer** — Subtle, white/10 text
+
+**Design System (Mindloop-inspired):**
+- `#0a0a0f` dark background throughout
+- Glass morphic: `bg-white/5 backdrop-blur-sm border-white/10 rounded-2xl`
+- Gradient text: `bg-gradient-to-r from-white to-[#FF1493] bg-clip-text text-transparent`
+- Shadow gradient orbs: `bg-[#FF1493]/10 rounded-full blur-3xl`
+- All transitions: `duration-500 ease-out`
+- Hover: cards `hover:border-[#FF1493]/30`, buttons color-flip animation
 
 ### Fixtures (Live TxLINE Devnet Data)
 - **Upcoming**: Argentina vs Egypt, Switzerland vs Colombia, Paraguay vs France, Brazil vs Norway, Mexico vs England, USA vs Belgium, Portugal vs Spain, Canada vs Morocco
@@ -200,6 +213,9 @@ fulltime/
 | 404 on `/markets` etc. in Vercel | No SPA rewrite rules | `vercel.json` rewrites `/(.*)` → `/index.html` |
 | `block-buffer 0.12.1` build error | Solana BPF platform-tools v1.48 (rustc 1.84.1) doesn't support edition2024 | Upgraded to Anchor CLI 1.1.2 (newer platform-tools) |
 | E2E market #2 "BettingCloseTimeInPast" | `now` timestamp captured at script start, stale after 15s | Compute `Date.now()` fresh before each `createMarket` |
+| Vercel white screen / IDL crash | Manual IDL had undefined custom types (ScoresBatchSummary, etc.) | Load full `idl.json` from `/public/idl.json` at runtime via `fetch()` |
+| Vercel SSO/redirect all pages | Deployment Protection (Vercel Authentication) enabled | `vercel project protection disable frontend --sso` |
+| Frontend LP Ciamik blank page | `shaders` npm package incompatible with React 19 + Vite | Deleted project, redesigned FullTime landing with CSS gradients instead |
 
 ---
 
@@ -224,6 +240,8 @@ fulltime/
 | 15 | `1f7912b` | Landing page championship-level redesign |
 | 16 | `a5dbe82` | Marquee country flags + comparison table |
 | 17 | `ecabdec` | Marquee: larger flags, no boxes, faster |
+| 18 | `649d5b2` | Fix IDL loading (fetch /idl.json), Anchor all(), Vercel SSO off |
+| 19 | `8808a3f` | Landing: Mindloop dark theme redesign (glass morphic, gradients) |
 
 ---
 
@@ -243,6 +261,12 @@ fulltime/
 
 | Item | Status |
 |------|--------|
+| Landing page (Mindloop dark theme) | ✅ Done |
+| All smart contract tests | ✅ 15/15 |
+| E2E flow (3 test runs) | ✅ All passing |
+| Vercel deployment (public) | ✅ fulltime-wc.vercel.app |
+| GitHub repo (public) | ✅ github.com/yt2025id-lab/fulltime |
+| IDL fix + discriminator fix | ✅ Done |
 | Video demo (1:30-2:00 menit) | ❌ Not done |
 | Submit ke Superteam Earn | ❌ Not done |
 
