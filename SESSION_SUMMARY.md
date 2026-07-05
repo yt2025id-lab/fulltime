@@ -2,7 +2,7 @@
 **Author:** Achmad Fauzan Ashari (Ozan_OnChain)
 **Hackathon:** TxODDS x Solana x Superteam Earn — World Cup 2026
 **Track:** Prediction Markets & Settlement ($18,000)
-**Date:** 4 Juli 2026 (Updated: Landing page Mindloop redesign, Vercel SSO fix, E2E tests #2-3)
+**Date:** 4 Juli 2026 (Updated: 6 Juli 2026 — v2: Yes/No binary, liquid glass dark theme, 3-page layout)
 **Deadline:** 19 Juli 2026 | **Pengumuman:** 29 Juli 2026
 
 ---
@@ -257,16 +257,56 @@ fulltime/
 
 ---
 
+## 🎨 v2.0 — Major Redesign (6 Juli 2026)
+
+### Perubahan Desain: Neo-Brutalist → Liquid Glass Dark Green
+- Terinspirasi dari **Stellar Prophecy** (Orange Belt Level 3)
+- Background `#052e16` dark green + stadium image
+- Glass morphic cards: `backdrop-blur` + gradient border via mask
+- Font: `Instrument Serif` italic (headings) + `Inter` (body)
+- Aksen: amber `#fbbf24` + gold gradient buttons
+- Animasi: `framer-motion` BlurText, blur-fade-up scroll reveals
+- Tambah `FadingVideo` component — video background loop dengan crossfade
+
+### Perubahan Smart Contract: 1X2 → Yes/No Binary
+- 3-outcome (HOME/DRAW/AWAY) → **binary YES/NO** (2 outcomes)
+- Pool: `pool_home`/`pool_draw`/`pool_away` → `pool_yes`/`pool_no`
+- **Dua mode settlement:**
+  - `settle_market` — TxLINE CPI trustless (home_goals > away_goals → YES, else → NO)
+  - **`resolve_market(outcome)` — NEW** — creator resolves manually untuk general Yes/No questions
+- Field baru: `is_trustless: bool` di struct Market
+- `MarketCreated` event updates
+- 15/15 tests passing (deployed to devnet)
+
+### Perubahan Frontend: 6 Halaman → 3 Halaman
+| Route | Page | Keterangan |
+|-------|------|------------|
+| `/` | Landing | Video bg, BlurText hero, 6 marquee, How It Works (4 steps), Features, CTA |
+| `/app` | **Dashboard** (NEW) | All-in-one: create market, bet, resolve, claim, your bets — menggabungkan Markets + MarketDetail + Admin + Portfolio |
+| `/matches` | **Matches** (NEW) | Live World Cup data dari football-data.org (port dari Stellar) |
+
+### Tech Stack Update
+- **framer-motion** ^12.x ditambahkan untuk animasi
+- `@types/bn.js` untuk Vercel build compatibility
+
+### Live
+- **Devnet Program:** `58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x` (upgraded)
+- **GitHub:** `github.com/yt2025id-lab/fulltime` (public)
+- **Vercel:** `fulltime-wc.vercel.app` (auto-deploy from main)
+
+
+
 ## ⚠️ Remaining for Hackathon Submission
 
 | Item | Status |
 |------|--------|
-| Landing page (Mindloop dark theme) | ✅ Done |
+| Landing page (liquid glass dark theme) | ✅ Done |
 | All smart contract tests | ✅ 15/15 |
-| E2E flow (3 test runs) | ✅ All passing |
+| Yes/No binary markets | ✅ Done |
+| resolve_market (manual) | ✅ Done |
+| 3-page layout | ✅ Done |
 | Vercel deployment (public) | ✅ fulltime-wc.vercel.app |
 | GitHub repo (public) | ✅ github.com/yt2025id-lab/fulltime |
-| IDL fix + discriminator fix | ✅ Done |
 | Video demo (1:30-2:00 menit) | ❌ Not done |
 | Submit ke Superteam Earn | ❌ Not done |
 
