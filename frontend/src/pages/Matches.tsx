@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fetchFixtures, fetchScores, getPhaseName, type TxLineFixture, type TxLineScore } from "../lib/txline";
-import { fetchScorers, fetchStandings, hasApiKey, type FDScorer, type FDStanding } from "../lib/football-data";
+import { fetchScorers, fetchStandings, fetchKnockout, hasApiKey, type FDScorer, type FDStanding, type FDKnockoutMatch } from "../lib/football-data";
 
 interface Match {
   id: number; home: string; away: string; homeFlag: string; awayFlag: string;
@@ -91,6 +91,7 @@ export default function Matches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [scorers, setScorers] = useState<FDScorer[]>(TOP_SCORERS);
   const [standings, setStandings] = useState<FDStanding[]>([]);
+  const [knockout, setKnockout] = useState<{ round: string; matches: FDKnockoutMatch[] }[]>(KNOCKOUT);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState("");
@@ -151,14 +152,10 @@ export default function Matches() {
 
     if (keyOk) {
       try {
-        const [sc, st] = await Promise.all([fetchScorers(), fetchStandings()]);
+        const [sc, st, ko] = await Promise.all([fetchScorers(), fetchStandings(), fetchKnockout()]);
         if (sc.length > 0) { setScorers(sc); setUsingLiveData(true); }
-        if (st.length > 0) {
-          const grouped: Record<string, FDStanding[]> = {};
-          for (const s of st) { if (!grouped[s.group]) grouped[s.group] = []; grouped[s.group].push(s); }
-          setStandings(st);
-          setUsingLiveData(true);
-        }
+        if (st.length > 0) { setStandings(st); setUsingLiveData(true); }
+        if (ko.length > 0) { setKnockout(ko); setUsingLiveData(true); }
       } catch {}
     }
     setLastUpdate(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }));
@@ -350,18 +347,18 @@ export default function Matches() {
 
         {detailTab === "knockout" && (
           <div className="space-y-8">
-            {KNOCKOUT.map((round) => (
+            {knockout.map((round) => (
               <div key={round.round}>
                 <h3 className="font-mono text-sm text-red-300/60 mb-3 tracking-wider uppercase">{round.round}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {round.matches.map((m, mi) => (
                     <div key={mi} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 hover:border-white/10 transition-colors">
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="font-mono font-semibold text-white text-sm">{m.hf} {m.h}</span>
+                        <span className="font-mono font-semibold text-white text-sm">{m.hf} {m.home}</span>
                         <span className={`font-mono font-bold text-lg shrink-0 ${m.hs !== null && m.as !== null ? "text-white" : "text-white/30"}`}>
                           {m.hs !== null && m.as !== null ? `${m.hs} - ${m.as}` : "vs"}
                         </span>
-                        <span className="font-mono font-semibold text-white text-sm text-right">{m.a} {m.af}</span>
+                        <span className="font-mono font-semibold text-white text-sm text-right">{m.away} {m.af}</span>
                       </div>
                       <div className="flex items-center justify-between text-[10px] font-mono text-white/25">
                         <span>{m.date} · {m.time}</span>
@@ -372,7 +369,7 @@ export default function Matches() {
                 </div>
               </div>
             ))}
-            <p className="text-center font-mono text-[10px] text-white/15 mt-2">Demo bracket — set VITE_FOOTBALL_API_KEY for live updates</p>
+            <p className="text-center font-mono text-[10px] text-white/15 mt-2">{usingLiveData ? "Live data via football-data.org" : "Demo data — set VITE_FOOTBALL_API_KEY for live updates"}</p>
           </div>
         )}
 

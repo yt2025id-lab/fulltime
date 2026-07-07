@@ -5,6 +5,7 @@ import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
 import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { fetchFixtures, type TxLineFixture } from "../lib/txline";
 import BN from "bn.js";
 
 const fadeIn = {
@@ -39,6 +40,26 @@ interface UIBet {
 
 function lamportsToSol(lamports: number) { return (lamports / 1e9).toFixed(4); }
 
+function flagEmoji(name: string): string {
+  const m: Record<string, string> = {
+    Argentina: "🇦🇷", Brazil: "🇧🇷", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", France: "🇫🇷",
+    Germany: "🇩🇪", Spain: "🇪🇸", Portugal: "🇵🇹", Netherlands: "🇳🇱",
+    Italy: "🇮🇹", Belgium: "🇧🇪", Uruguay: "🇺🇾", Colombia: "🇨🇴",
+    Mexico: "🇲🇽", USA: "🇺🇸", Canada: "🇨🇦", Japan: "🇯🇵",
+    "South Korea": "🇰🇷", Australia: "🇦🇺", Morocco: "🇲🇦", Senegal: "🇸🇳",
+    Croatia: "🇭🇷", Switzerland: "🇨🇭", Norway: "🇳🇴", Sweden: "🇸🇪",
+    Egypt: "🇪🇬", Ghana: "🇬🇭", Tunisia: "🇹🇳", Algeria: "🇩🇿",
+    Ecuador: "🇪🇨", Paraguay: "🇵🇾", Austria: "🇦🇹", Turkey: "🇹🇷",
+    "Saudi Arabia": "🇸🇦", Iran: "🇮🇷", "South Africa": "🇿🇦",
+    "Cape Verde": "🇨🇻", "Ivory Coast": "🇨🇮", Cameroon: "🇨🇲",
+    Nigeria: "🇳🇬", "New Zealand": "🇳🇿", Panama: "🇵🇦",
+    Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", Denmark: "🇩🇰", Poland: "🇵🇱",
+    Czechia: "🇨🇿", Iraq: "🇮🇶", Jordan: "🇯🇴", Uzbekistan: "🇺🇿",
+    Qatar: "🇶🇦", Vietnam: "🇻🇳", Myanmar: "🇲🇲",
+  };
+  return m[name] || "⚽";
+}
+
 function statusLabel(s: string): { label: string; color: string } {
   if (s === "pending") return { label: "Pending", color: "text-white/40" };
   if (s === "open") return { label: "Open", color: "text-green-400" };
@@ -71,9 +92,10 @@ export default function Dashboard() {
 
   const [question, setQuestion] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [fixtureId, setFixtureId] = useState("");
-  const [isTrustless, setIsTrustless] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  const [fixtures, setFixtures] = useState<TxLineFixture[]>([]);
+  const [showFixtures, setShowFixtures] = useState(true);
 
   const [betMarket, setBetMarket] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState("");
@@ -152,23 +174,61 @@ export default function Dashboard() {
     if (connected) { loadMarkets(); loadBets(); }
   }, [connected]);
 
+  useEffect(() => {
+    fetchFixtures().then(fixtures => {
+      const wc = fixtures.filter((f: TxLineFixture) =>
+        f.Competition?.toLowerCase().includes("world cup") || f.Competition?.toLowerCase().includes("wc")
+      );
+      setFixtures(wc.length > 0 ? wc : fixtures.slice(0, 12));
+    }).catch(() => {});
+  }, []);
+
   const reload = () => setTimeout(() => { loadMarkets(); loadBets(); }, 2000);
 
-  const createMarket = async () => {
+  const createFixtureMarket = async (f: TxLineFixture) => {
+    if (!program || !publicKey) {
+      setStatus({ type: "error", msg: "Wallet not connected or program not loaded" });
+      return;
+    }
+    setCreating(true);
+    try {
+      const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
+      const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
+      const question = `Will ${home} beat ${away}?`;
+      const nowTs = Math.floor(Date.now() / 1000);
+      const openTime = nowTs + 10;
+      const closeTime = openTime + 86400;
+      mark("Creating market...");
+      await program.methods
+        .createMarket(new BN(f.FixtureId), question, new BN(openTime), new BN(closeTime), true)
+        .accounts({ creator: publicKey, systemProgram: SystemProgram.programId })
+        .rpc({ commitment: "confirmed" });
+      const mpda = marketPda(publicKey, f.FixtureId);
+      await program.methods.openMarket().accounts({ market: mpda }).rpc({ commitment: "confirmed" });
+      setStatus({ type: "success", msg: `Market created & opened: ${home} vs ${away}` });
+      reload();
+    } catch (e: any) {
+      const msg = e.message || String(e);
+      console.error("createFixtureMarket error:", msg);
+      setStatus({ type: "error", msg: msg.slice(0, 200) });
+    }
+    setCreating(false);
+  };
+
+  const createManualMarket = async () => {
     if (!program || !publicKey || !question || !deadline) return;
     setCreating(true);
     try {
       const dl = Math.floor(new Date(deadline).getTime() / 1000);
       const nowTs = Math.floor(Date.now() / 1000);
-      const openTime = nowTs + 30;
-      const closeTime = Math.max(openTime + 60, dl);
-      const fid = fixtureId ? parseInt(fixtureId) : 0;
-      mark("Creating market...");
+      const openTime = nowTs + 10;
+      const closeTime = Math.max(openTime + 3600, dl);
+      mark("Creating manual market...");
       await program.methods
-        .createMarket(new BN(fid), question, new BN(openTime), new BN(closeTime), isTrustless)
+        .createMarket(new BN(0), question, new BN(openTime), new BN(closeTime), false)
         .accounts({ creator: publicKey })
         .rpc();
-      setQuestion(""); setDeadline(""); setFixtureId("");
+      setQuestion(""); setDeadline("");
       setStatus({ type: "success", msg: "Market created!" });
       reload();
     } catch (e: any) {
@@ -178,19 +238,6 @@ export default function Dashboard() {
   };
 
   const openMarket = async (marketPk: PublicKey) => {
-    if (!program) return;
-    try {
-      mark("Opening market...");
-      const m = await (program as any).account.market.fetch(marketPk);
-      await program.methods.openMarket()
-        .accounts({ market: marketPk })
-        .rpc();
-      setStatus({ type: "success", msg: "Market opened!" });
-      reload();
-    } catch (e: any) { setStatus({ type: "error", msg: e.message?.slice(0, 120) || String(e) }); }
-  };
-
-  const closeBetting = async (marketPk: PublicKey) => {
     if (!program) return;
     try {
       mark("Closing betting...");
@@ -329,24 +376,62 @@ export default function Dashboard() {
           <p className="text-xs text-white/40 font-mono mt-2">{markets.length} markets</p>
         </motion.div>
 
-        {/* Create Market */}
+        {/* World Cup 2026 Fixtures — Auto-Create Markets */}
+        {connected && fixtures.length > 0 && (
+          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-mono tracking-[-1px] text-white text-2xl">World Cup 2026 Fixtures</h2>
+              <button onClick={() => setShowFixtures(!showFixtures)} className="text-xs font-mono text-white/40 hover:text-white transition-colors">{showFixtures ? "Hide" : "Show"}</button>
+            </div>
+            <p className="font-mono text-xs text-white/30 mb-4">Create a trustless prediction market directly from these TxLINE fixtures — auto-settled via Merkle proof CPI.</p>
+            {showFixtures && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+                {fixtures.filter(f => {
+                  const fixtureId = f.FixtureId;
+                  return !markets.some(m => m.fixtureId === fixtureId);
+                }).slice(0, 8).map(f => {
+                  const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
+                  const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
+                  const d = f.StartTime ? new Date(f.StartTime) : new Date();
+                  const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  return (
+                    <div key={f.FixtureId} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between hover:border-red-400/30 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono text-sm text-white font-semibold">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
+                        <div className="font-mono text-[10px] text-white/30 mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
+                      </div>
+                      <button
+                        onClick={() => createFixtureMarket(f)}
+                        disabled={creating}
+                        className="ml-3 shrink-0 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-full px-4 py-2 text-xs font-mono font-semibold transition-colors"
+                      >
+                        Create & Bet
+                      </button>
+                    </div>
+                  );
+                })}
+                {fixtures.filter(f => !markets.some(m => m.fixtureId === f.FixtureId)).length === 0 && (
+                  <p className="col-span-2 text-center font-mono text-xs text-white/20 py-4">All fixtures have markets created</p>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Custom Market */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
-            <h2 className="font-mono tracking-[-1px] text-white text-2xl tracking-[-1px] mb-4">Create Market</h2>
+            <h2 className="font-mono tracking-[-1px] text-white text-2xl tracking-[-1px] mb-4">Custom Market</h2>
+            <p className="font-mono text-xs text-white/30 mb-3">Create a manual YES/NO market for any question. You resolve the outcome.</p>
             <div className="space-y-3">
               <input className="w-full bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50 transition-all" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
               <div className="flex flex-col sm:flex-row gap-3">
                 <input className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
-                <input className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50" placeholder="Fixture ID (optional)" value={fixtureId} onChange={e => setFixtureId(e.target.value)} />
               </div>
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm font-mono text-white/60 cursor-pointer">
-                  <input type="checkbox" checked={isTrustless} onChange={e => setIsTrustless(e.target.checked)} className="accent-red-500" />
-                  Trustless (TxLINE settlement)
-                </label>
                 <div className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60">Fee: <span className="text-red-300 font-medium">2%</span></div>
               </div>
-              <button onClick={createMarket} disabled={creating || !question || !deadline} className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-black rounded-full px-5 py-3 text-sm font-semibold font-mono disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/20">{creating ? "Creating..." : "Create Market"}</button>
+              <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-black rounded-full px-5 py-3 text-sm font-semibold font-mono disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/20">{creating ? "Creating..." : "Create Market"}</button>
             </div>
           </motion.div>
         )}
