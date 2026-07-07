@@ -9,7 +9,7 @@
 html, body, #root {
   margin: 0;
   padding: 0;
-  background: #052e16;
+  background: #000;
   color: #fff;
   overflow-x: hidden;
 }
@@ -82,5 +82,5 @@ html, body, #root {
 }
 
 .animate-marquee {
-  animation: marquee 30s linear infinite;
+  animation: marquee 18s linear infinite;
 }

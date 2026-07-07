@@ -1,301 +1,269 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-
-const API_KEY = import.meta.env.VITE_FOOTBALL_API_KEY || "";
-
-const COMPETITION = "WC";
+import { fetchFixtures, fetchScores, getPhaseName, type TxLineFixture, type TxLineScore } from "../lib/txline";
+import { fetchScorers, fetchStandings, hasApiKey, type FDScorer, type FDStanding } from "../lib/football-data";
 
 interface Match {
-  id: number;
-  homeTeam: string;
-  awayTeam: string;
-  homeFlag: string;
-  awayFlag: string;
-  homeScore: number | null;
-  awayScore: number | null;
-  status: "upcoming" | "live" | "finished";
-  date: string;
-  time: string;
-  venue: string;
-  minute?: string;
-  group?: string;
+  id: number; home: string; away: string; homeFlag: string; awayFlag: string;
+  homeScore: number | null; awayScore: number | null; status: MatchStatus;
+  date: string; time: string; phase: string; phaseId: number; competition: string;
 }
-
-interface Scorer {
-  id: number;
-  player: string;
-  team: string;
-  flag: string;
-  goals: number;
-  assists: number;
-  matches: number;
-}
-
-interface Standing {
-  position: number;
-  team: string;
-  flag: string;
-  played: number;
-  won: number;
-  draw: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  points: number;
-  group: string;
-}
+type MatchStatus = "live" | "upcoming" | "finished";
+type MainTab = "matches" | "live" | "upcoming" | "finished";
+type DetailTab = "matches" | "scorers" | "standings" | "knockout";
 
 const flagMap: Record<string, string> = {
-  USA: "🇺🇸", CAN: "🇨🇦", MEX: "🇲🇽", ARG: "🇦🇷", BRA: "🇧🇷",
-  ENG: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", FRA: "🇫🇷", GER: "🇩🇪", ESP: "🇪🇸", ITA: "🇮🇹",
-  NED: "🇳🇱", POR: "🇵🇹", URU: "🇺🇾", COL: "🇨🇴",
-  JPN: "🇯🇵", KOR: "🇰🇷", KSA: "🇸🇦", AUS: "🇦🇺",
-  MAR: "🇲🇦", SEN: "🇸🇳", CRO: "🇭🇷", BEL: "🇧🇪",
-  ECU: "🇪🇨", CIV: "🇨🇮", ALG: "🇩🇿", EGY: "🇪🇬",
-  GHA: "🇬🇭", TUN: "🇹🇳", RSA: "🇿🇦", CPV: "🇨🇻",
-  COD: "🇨🇩", CMR: "🇨🇲", NGA: "🇳🇬", IRN: "🇮🇷",
-  QAT: "🇶🇦", IRQ: "🇮🇶", JOR: "🇯🇴", UZB: "🇺🇿",
-  NZL: "🇳🇿", NOR: "🇳🇴", SWE: "🇸🇪", SUI: "🇨🇭",
-  AUT: "🇦🇹", CZE: "🇨🇿", TUR: "🇹🇷", PAR: "🇵🇾",
-  PAN: "🇵🇦", HAI: "🇭🇹", BIH: "🇧🇦", CUW: "🇨🇼",
-  DEN: "🇩🇰", SRB: "🇷🇸", POL: "🇵🇱", UKR: "🇺🇦",
-  SCO: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", WAL: "🏴󠁧󠁢󠁷󠁬󠁳󠁿", RUS: "🇷🇺",
-  HUN: "🇭🇺", ROU: "🇷🇴", GRE: "🇬🇷", FIN: "🇫🇮",
-  BUL: "🇧🇬", SVK: "🇸🇰", SVN: "🇸🇮", ISR: "🇮🇱",
-  ALB: "🇦🇱", GEO: "🇬🇪", ARM: "🇦🇲", CHI: "🇨🇱",
-  BOL: "🇧🇴", VEN: "🇻🇪", PER: "🇵🇪", CRC: "🇨🇷",
-  JAM: "🇯🇲",
+  Argentina: "🇦🇷", Brazil: "🇧🇷", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", France: "🇫🇷",
+  Germany: "🇩🇪", Spain: "🇪🇸", Portugal: "🇵🇹", Netherlands: "🇳🇱",
+  Italy: "🇮🇹", Belgium: "🇧🇪", Uruguay: "🇺🇾", Colombia: "🇨🇴",
+  Mexico: "🇲🇽", USA: "🇺🇸", Canada: "🇨🇦", Japan: "🇯🇵",
+  "South Korea": "🇰🇷", Australia: "🇦🇺", Morocco: "🇲🇦", Senegal: "🇸🇳",
+  Croatia: "🇭🇷", Switzerland: "🇨🇭", Norway: "🇳🇴", Sweden: "🇸🇪",
+  Egypt: "🇪🇬", Ghana: "🇬🇭", Tunisia: "🇹🇳", Algeria: "🇩🇿",
+  Ecuador: "🇪🇨", Paraguay: "🇵🇾", Austria: "🇦🇹", Turkey: "🇹🇷",
+  "Saudi Arabia": "🇸🇦", Iran: "🇮🇷", "South Africa": "🇿🇦",
+  "Cape Verde": "🇨🇻", "Congo DR": "🇨🇩", "Ivory Coast": "🇨🇮",
+  Cameroon: "🇨🇲", Nigeria: "🇳🇬", "New Zealand": "🇳🇿",
+  "Costa Rica": "🇨🇷", Panama: "🇵🇦", Jamaica: "🇯🇲", Haiti: "🇭🇹",
+  Bosnia: "🇧🇦", Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", Denmark: "🇩🇰", Poland: "🇵🇱",
+  Czechia: "🇨🇿", Iraq: "🇮🇶", Jordan: "🇯🇴", Uzbekistan: "🇺🇿",
+  Qatar: "🇶🇦", "Curacao": "🇨🇼", Vietnam: "🇻🇳", Myanmar: "🇲🇲",
 };
+function fl(name: string) { return flagMap[name] || "⚽"; }
 
-function getFlag(name: string): string {
-  return flagMap[name] || "⚽";
-}
-
-function mapStatus(status: string): Match["status"] {
-  if (status === "LIVE" || status === "IN_PLAY" || status === "PAUSED") return "live";
-  if (status === "FINISHED" || status === "AWARDED") return "finished";
-  return "upcoming";
-}
-
-type MainTab = "matches" | "scorers" | "standings";
-type MatchTab = "all" | "upcoming" | "live" | "finished";
-
-const fallbackMatches: Match[] = [
-  { id: 9901, homeTeam: "Argentina", awayTeam: "France", homeFlag: "🇦🇷", awayFlag: "🇫🇷", homeScore: 2, awayScore: 2, status: "live", date: "2026-07-03", time: "20:00", venue: "SoFi Stadium, Los Angeles", minute: "67'", group: "Quarter-Final" },
-  { id: 9902, homeTeam: "England", awayTeam: "Germany", homeFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", awayFlag: "🇩🇪", homeScore: 0, awayScore: 0, status: "live", date: "2026-07-03", time: "16:00", venue: "AT&T Stadium, Dallas", minute: "34'", group: "Quarter-Final" },
-  { id: 9903, homeTeam: "Spain", awayTeam: "Netherlands", homeFlag: "🇪🇸", awayFlag: "🇳🇱", homeScore: null, awayScore: null, status: "upcoming", date: "2026-07-04", time: "16:00", venue: "Mercedes-Benz Stadium, Atlanta", group: "Quarter-Final" },
-  { id: 9904, homeTeam: "Portugal", awayTeam: "Italy", homeFlag: "🇵🇹", awayFlag: "🇮🇹", homeScore: null, awayScore: null, status: "upcoming", date: "2026-07-04", time: "20:00", venue: "Arrowhead Stadium, Kansas City", group: "Quarter-Final" },
-  { id: 9905, homeTeam: "USA", awayTeam: "Canada", homeFlag: "🇺🇸", awayFlag: "🇨🇦", homeScore: 2, awayScore: 1, status: "finished", date: "2026-06-11", time: "19:00", venue: "MetLife Stadium, New Jersey", group: "Group A" },
-  { id: 9906, homeTeam: "Brazil", awayTeam: "Mexico", homeFlag: "🇧🇷", awayFlag: "🇲🇽", homeScore: 3, awayScore: 1, status: "finished", date: "2026-06-12", time: "16:00", venue: "Estadio Azteca, Mexico City", group: "Group B" },
-  { id: 9907, homeTeam: "Colombia", awayTeam: "Uruguay", homeFlag: "🇨🇴", awayFlag: "🇺🇾", homeScore: 1, awayScore: 0, status: "finished", date: "2026-07-02", time: "20:00", venue: "Gillette Stadium, Boston", group: "Round of 16" },
-  { id: 9908, homeTeam: "Japan", awayTeam: "Morocco", homeFlag: "🇯🇵", awayFlag: "🇲🇦", homeScore: 0, awayScore: 2, status: "finished", date: "2026-07-02", time: "16:00", venue: "NRG Stadium, Houston", group: "Round of 16" },
+const TOP_SCORERS = [
+  { player: "Kylian Mbappé", team: "France", flag: "🇫🇷", goals: 5, assists: 2, matches: 4 },
+  { player: "Lionel Messi", team: "Argentina", flag: "🇦🇷", goals: 4, assists: 3, matches: 4 },
+  { player: "Erling Haaland", team: "Norway", flag: "🇳🇴", goals: 4, assists: 1, matches: 3 },
+  { player: "Vinícius Jr.", team: "Brazil", flag: "🇧🇷", goals: 3, assists: 2, matches: 3 },
+  { player: "Jude Bellingham", team: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", goals: 3, assists: 1, matches: 3 },
+  { player: "Lamine Yamal", team: "Spain", flag: "🇪🇸", goals: 3, assists: 2, matches: 3 },
+  { player: "Cristiano Ronaldo", team: "Portugal", flag: "🇵🇹", goals: 2, assists: 1, matches: 3 },
+  { player: "Lautaro Martínez", team: "Argentina", flag: "🇦🇷", goals: 2, assists: 1, matches: 3 },
+  { player: "Jamal Musiala", team: "Germany", flag: "🇩🇪", goals: 2, assists: 1, matches: 3 },
+  { player: "Federico Valverde", team: "Uruguay", flag: "🇺🇾", goals: 2, assists: 0, matches: 3 },
 ];
 
-const fallbackScorers: Scorer[] = [
-  { id: 991, player: "Kylian Mbappé", team: "France", flag: "🇫🇷", goals: 5, assists: 2, matches: 4 },
-  { id: 992, player: "Lionel Messi", team: "Argentina", flag: "🇦🇷", goals: 4, assists: 3, matches: 4 },
-  { id: 993, player: "Erling Haaland", team: "Norway", flag: "🇳🇴", goals: 3, assists: 1, matches: 3 },
-  { id: 994, player: "Vinícius Jr.", team: "Brazil", flag: "🇧🇷", goals: 3, assists: 2, matches: 3 },
-  { id: 995, player: "Jude Bellingham", team: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", goals: 3, assists: 1, matches: 3 },
+const STANDINGS = [
+  { group: "Group A", teams: [{ pos: 1, team: "USA", flag: "🇺🇸", p: 3, w: 2, d: 1, l: 0, gf: 5, ga: 2, pts: 7 }, { pos: 2, team: "Canada", flag: "🇨🇦", p: 3, w: 1, d: 2, l: 0, gf: 4, ga: 3, pts: 5 }, { pos: 3, team: "Mexico", flag: "🇲🇽", p: 3, w: 1, d: 1, l: 1, gf: 3, ga: 3, pts: 4 }, { pos: 4, team: "Panama", flag: "🇵🇦", p: 3, w: 0, d: 0, l: 3, gf: 1, ga: 5, pts: 0 }] },
+  { group: "Group B", teams: [{ pos: 1, team: "Brazil", flag: "🇧🇷", p: 3, w: 3, d: 0, l: 0, gf: 7, ga: 1, pts: 9 }, { pos: 2, team: "Uruguay", flag: "🇺🇾", p: 3, w: 2, d: 0, l: 1, gf: 5, ga: 3, pts: 6 }, { pos: 3, team: "Colombia", flag: "🇨🇴", p: 3, w: 1, d: 0, l: 2, gf: 3, ga: 5, pts: 3 }, { pos: 4, team: "Ecuador", flag: "🇪🇨", p: 3, w: 0, d: 0, l: 3, gf: 1, ga: 7, pts: 0 }] },
+  { group: "Group C", teams: [{ pos: 1, team: "Argentina", flag: "🇦🇷", p: 3, w: 3, d: 0, l: 0, gf: 8, ga: 2, pts: 9 }, { pos: 2, team: "Morocco", flag: "🇲🇦", p: 3, w: 1, d: 1, l: 1, gf: 4, ga: 4, pts: 4 }, { pos: 3, team: "Egypt", flag: "🇪🇬", p: 3, w: 1, d: 0, l: 2, gf: 2, ga: 5, pts: 3 }, { pos: 4, team: "Japan", flag: "🇯🇵", p: 3, w: 0, d: 1, l: 2, gf: 2, ga: 5, pts: 1 }] },
+  { group: "Group D", teams: [{ pos: 1, team: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", p: 3, w: 2, d: 1, l: 0, gf: 6, ga: 1, pts: 7 }, { pos: 2, team: "Germany", flag: "🇩🇪", p: 3, w: 2, d: 0, l: 1, gf: 5, ga: 3, pts: 6 }, { pos: 3, team: "Spain", flag: "🇪🇸", p: 3, w: 1, d: 1, l: 1, gf: 4, ga: 3, pts: 4 }, { pos: 4, team: "Netherlands", flag: "🇳🇱", p: 3, w: 0, d: 0, l: 3, gf: 1, ga: 9, pts: 0 }] },
+  { group: "Group E", teams: [{ pos: 1, team: "France", flag: "🇫🇷", p: 3, w: 2, d: 1, l: 0, gf: 7, ga: 1, pts: 7 }, { pos: 2, team: "Portugal", flag: "🇵🇹", p: 3, w: 2, d: 0, l: 1, gf: 5, ga: 2, pts: 6 }, { pos: 3, team: "Belgium", flag: "🇧🇪", p: 3, w: 1, d: 1, l: 1, gf: 4, ga: 4, pts: 4 }, { pos: 4, team: "Sweden", flag: "🇸🇪", p: 3, w: 0, d: 0, l: 3, gf: 1, ga: 10, pts: 0 }] },
+  { group: "Group F", teams: [{ pos: 1, team: "Italy", flag: "🇮🇹", p: 3, w: 3, d: 0, l: 0, gf: 5, ga: 0, pts: 9 }, { pos: 2, team: "Croatia", flag: "🇭🇷", p: 3, w: 1, d: 2, l: 0, gf: 3, ga: 2, pts: 5 }, { pos: 3, team: "Senegal", flag: "🇸🇳", p: 3, w: 1, d: 0, l: 2, gf: 3, ga: 5, pts: 3 }, { pos: 4, team: "Australia", flag: "🇦🇺", p: 3, w: 0, d: 0, l: 3, gf: 1, ga: 5, pts: 0 }] },
+  { group: "Group G", teams: [{ pos: 1, team: "South Korea", flag: "🇰🇷", p: 3, w: 1, d: 2, l: 0, gf: 4, ga: 3, pts: 5 }, { pos: 2, team: "Switzerland", flag: "🇨🇭", p: 3, w: 1, d: 2, l: 0, gf: 3, ga: 2, pts: 5 }, { pos: 3, team: "Ivory Coast", flag: "🇨🇮", p: 3, w: 1, d: 1, l: 1, gf: 3, ga: 3, pts: 4 }, { pos: 4, team: "Saudi Arabia", flag: "🇸🇦", p: 3, w: 0, d: 1, l: 2, gf: 2, ga: 4, pts: 1 }] },
+  { group: "Group H", teams: [{ pos: 1, team: "Paraguay", flag: "🇵🇾", p: 3, w: 2, d: 1, l: 0, gf: 5, ga: 2, pts: 7 }, { pos: 2, team: "Norway", flag: "🇳🇴", p: 3, w: 2, d: 0, l: 1, gf: 6, ga: 3, pts: 6 }, { pos: 3, team: "Tunisia", flag: "🇹🇳", p: 3, w: 1, d: 0, l: 2, gf: 2, ga: 5, pts: 3 }, { pos: 4, team: "New Zealand", flag: "🇳🇿", p: 3, w: 0, d: 0, l: 3, gf: 0, ga: 6, pts: 0 }] },
 ];
 
-const fallbackStandings: Standing[] = [
-  { position: 1, team: "Argentina", flag: "🇦🇷", played: 3, won: 3, draw: 0, lost: 0, goalsFor: 8, goalsAgainst: 2, points: 9, group: "Group C" },
-  { position: 1, team: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", played: 3, won: 2, draw: 1, lost: 0, goalsFor: 6, goalsAgainst: 1, points: 7, group: "Group D" },
-  { position: 1, team: "Brazil", flag: "🇧🇷", played: 3, won: 3, draw: 0, lost: 0, goalsFor: 7, goalsAgainst: 1, points: 9, group: "Group B" },
+const KNOCKOUT = [
+  { round: "Round of 16", matches: [
+    { h: "Argentina", a: "Ecuador", hf: "🇦🇷", af: "🇪🇨", hs: 3, as: 1, date: "Jul 3", time: "16:00", venue: "Hard Rock Stadium" },
+    { h: "USA", a: "Netherlands", hf: "🇺🇸", af: "🇳🇱", hs: 1, as: 2, date: "Jul 3", time: "20:00", venue: "SoFi Stadium" },
+    { h: "Brazil", a: "Spain", hf: "🇧🇷", af: "🇪🇸", hs: 4, as: 2, date: "Jul 4", time: "16:00", venue: "AT&T Stadium" },
+    { h: "Italy", a: "Morocco", hf: "🇮🇹", af: "🇲🇦", hs: 2, as: 0, date: "Jul 4", time: "20:00", venue: "Arrowhead Stadium" },
+    { h: "France", a: "Egypt", hf: "🇫🇷", af: "🇪🇬", hs: 2, as: 1, date: "Jul 5", time: "16:00", venue: "Mercedes-Benz Stadium" },
+    { h: "England", a: "Uruguay", hf: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", af: "🇺🇾", hs: 3, as: 0, date: "Jul 5", time: "20:00", venue: "MetLife Stadium" },
+    { h: "Portugal", a: "Croatia", hf: "🇵🇹", af: "🇭🇷", hs: 1, as: 1, date: "Jul 6", time: "16:00", venue: "Gillette Stadium" },
+    { h: "Germany", a: "Canada", hf: "🇩🇪", af: "🇨🇦", hs: 2, as: 1, date: "Jul 6", time: "20:00", venue: "Lumen Field" },
+  ]},
+  { round: "Quarter-Finals", matches: [
+    { h: "Argentina", a: "Netherlands", hf: "🇦🇷", af: "🇳🇱", hs: 2, as: 2, date: "Jul 10", time: "16:00", venue: "NRG Stadium" },
+    { h: "Brazil", a: "Italy", hf: "🇧🇷", af: "🇮🇹", hs: 1, as: 0, date: "Jul 10", time: "20:00", venue: "Levi's Stadium" },
+    { h: "France", a: "England", hf: "🇫🇷", af: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", hs: 2, as: 1, date: "Jul 11", time: "16:00", venue: "Estadio Azteca" },
+    { h: "Portugal", a: "Germany", hf: "🇵🇹", af: "🇩🇪", hs: null, as: null, date: "Jul 11", time: "20:00", venue: "BC Place" },
+  ]},
+  { round: "Semi-Finals", matches: [
+    { h: "Argentina", a: "Brazil", hf: "🇦🇷", af: "🇧🇷", hs: null, as: null, date: "Jul 15", time: "20:00", venue: "AT&T Stadium" },
+    { h: "France", a: "Portugal", hf: "🇫🇷", af: "🇵🇹", hs: null, as: null, date: "Jul 16", time: "20:00", venue: "Mercedes-Benz Stadium" },
+  ]},
+  { round: "Third Place", matches: [
+    { h: "Brazil", a: "Portugal", hf: "🇧🇷", af: "🇵🇹", hs: null, as: null, date: "Jul 18", time: "16:00", venue: "Hard Rock Stadium" },
+  ]},
+  { round: "Final", matches: [
+    { h: "Argentina", a: "France", hf: "🇦🇷", af: "🇫🇷", hs: null, as: null, date: "Jul 19", time: "20:00", venue: "MetLife Stadium · New Jersey" },
+  ]},
 ];
 
 export default function Matches() {
+  const [detailTab, setDetailTab] = useState<DetailTab>("matches");
   const [mainTab, setMainTab] = useState<MainTab>("matches");
-  const [matchTab, setMatchTab] = useState<MatchTab>("all");
-
   const [matches, setMatches] = useState<Match[]>([]);
-  const [scorers, setScorers] = useState<Scorer[]>([]);
-  const [standings, setStandings] = useState<Standing[]>([]);
+  const [scorers, setScorers] = useState<FDScorer[]>(TOP_SCORERS);
+  const [standings, setStandings] = useState<FDStanding[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [lastUpdate, setLastUpdate] = useState("");
+  const [usingLiveData, setUsingLiveData] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    if (!API_KEY) {
-      setError("API key not configured — showing demo data");
-      setMatches(fallbackMatches);
-      setScorers(fallbackScorers);
-      setStandings(fallbackStandings);
-      setLoading(false);
-      return;
-    }
+  const load = useCallback(async () => {
+    setLoading(true);
+    const keyOk = hasApiKey();
 
-    const BASE = "https://api.football-data.org/v4";
-    const headers: Record<string, string> = { "X-Auth-Token": API_KEY };
+    // TxLINE fixtures + scores (always try)
     try {
-      const [matchRes, scorerRes, standingRes] = await Promise.all([
-        fetch(`${BASE}/competitions/${COMPETITION}/matches`, { headers }),
-        fetch(`${BASE}/competitions/${COMPETITION}/scorers?limit=15`, { headers }),
-        fetch(`${BASE}/competitions/${COMPETITION}/standings`, { headers }),
-      ]);
+      const fixtures = await fetchFixtures();
+      const wcFixtures = fixtures.filter((f: TxLineFixture) =>
+        f.Competition?.toLowerCase().includes("world cup") || f.Competition?.toLowerCase().includes("wc")
+      );
+      const source = wcFixtures.length > 0 ? wcFixtures : fixtures.slice(0, 16);
+      const mapped: Match[] = await Promise.all(source.map(async (f: TxLineFixture) => {
+        const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
+        const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
+        const liveStatus = f.Status || "";
+        const isFinished = liveStatus.toLowerCase().includes("finish") || liveStatus.toLowerCase().includes("full");
+        const isLive = liveStatus.toLowerCase().includes("live") || liveStatus.toLowerCase().includes("progress");
+        const status: MatchStatus = isFinished ? "finished" : isLive ? "live" : "upcoming";
+        const d = f.StartTime ? new Date(f.StartTime) : new Date();
 
-      if (matchRes.ok) {
-        const data = await matchRes.json();
-        const mapped: Match[] = (data.matches || []).map((m: any) => ({
-          id: m.id, homeTeam: m.homeTeam?.name || "TBD", awayTeam: m.awayTeam?.name || "TBD",
-          homeFlag: getFlag(m.homeTeam?.tla || ""), awayFlag: getFlag(m.awayTeam?.tla || ""),
-          homeScore: m.score?.fullTime?.home ?? null, awayScore: m.score?.fullTime?.away ?? null,
-          status: mapStatus(m.status || "SCHEDULED"),
-          date: m.utcDate ? m.utcDate.slice(0, 10) : "",
-          time: m.utcDate ? new Date(m.utcDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "",
-          venue: m.venue || "", minute: m.minute ? `${m.minute}'` : "", group: m.group || m.stage || "",
-        }));
-        setMatches(mapped);
-      }
-
-      if (scorerRes.ok) {
-        const data = await scorerRes.json();
-        setScorers((data.scorers || []).map((s: any, i: number) => ({
-          id: i, player: s.player?.name || "Unknown", team: s.team?.shortName || "",
-          flag: getFlag(s.team?.tla || ""), goals: s.goals || 0, assists: s.assists || 0, matches: s.playedMatches || 0,
-        })));
-      }
-
-      if (standingRes.ok) {
-        const data = await standingRes.json();
-        const all: Standing[] = [];
-        for (const t of data.standings || []) {
-          for (const row of t.table || []) {
-            all.push({ position: row.position || 0, team: row.team?.shortName || "", flag: getFlag(row.team?.tla || ""), played: row.playedGames || 0, won: row.won || 0, draw: row.draw || 0, lost: row.lost || 0, goalsFor: row.goalsFor || 0, goalsAgainst: row.goalsAgainst || 0, points: row.points || 0, group: t.group || "" });
-          }
+        let homeScore: number | null = null, awayScore: number | null = null, phase = liveStatus, phaseId = 0;
+        if (isFinished || isLive) {
+          try {
+            const scores: TxLineScore[] = await fetchScores(f.FixtureId);
+            if (scores.length > 0) {
+              const last = scores[scores.length - 1];
+              phaseId = last.phase || last.phaseId || 0;
+              phase = getPhaseName(phaseId);
+              const homeVal = scores.find((s: TxLineScore) => s.key === 1);
+              const awayVal = scores.find((s: TxLineScore) => s.key === 2);
+              if (homeVal) homeScore = homeVal.value ?? 0;
+              if (awayVal) awayScore = awayVal.value ?? 0;
+            }
+          } catch {}
         }
-        setStandings(all);
-      }
 
-      setLastUpdate(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }));
+        return {
+          id: f.FixtureId, home, away, homeFlag: fl(home), awayFlag: fl(away),
+          homeScore, awayScore, status,
+          date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+          phase, phaseId, competition: f.Competition || "",
+        };
+      }));
+
+      mapped.sort((a, b) => { const o: Record<string, number> = { live: 0, upcoming: 1, finished: 2 }; return o[a.status] - o[b.status]; });
+      setMatches(mapped);
       setError(null);
-    } catch {
-      if (matches.length === 0) setMatches(fallbackMatches);
-      if (scorers.length === 0) setScorers(fallbackScorers);
-      if (standings.length === 0) setStandings(fallbackStandings);
-      setError("live_unavailable");
-    } finally {
-      setLoading(false);
+    } catch (e: any) {
+      setError("Unable to load fixture data from TxLINE. Ensure API server is running.");
+      setMatches([]);
     }
+
+    if (keyOk) {
+      try {
+        const [sc, st] = await Promise.all([fetchScorers(), fetchStandings()]);
+        if (sc.length > 0) { setScorers(sc); setUsingLiveData(true); }
+        if (st.length > 0) {
+          const grouped: Record<string, FDStanding[]> = {};
+          for (const s of st) { if (!grouped[s.group]) grouped[s.group] = []; grouped[s.group].push(s); }
+          setStandings(st);
+          setUsingLiveData(true);
+        }
+      } catch {}
+    }
+    setLastUpdate(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }));
+    setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); const iv = setInterval(fetchData, 60000); return () => clearInterval(iv); }, [fetchData]);
+  useEffect(() => { load(); const t = setInterval(load, 30000); return () => clearInterval(t); }, [load]);
 
-  const sortByDate = (list: Match[]) => [...list].sort((a, b) => new Date(b.date + "T" + (b.time || "00:00")).getTime() - new Date(a.date + "T" + (a.time || "00:00")).getTime());
-  const filteredMatches = (() => {
-    const base = matchTab === "all" ? matches : matches.filter(m => m.status === matchTab);
-    const live = base.filter(m => m.status === "live");
-    const rest = sortByDate(base.filter(m => m.status !== "live"));
-    return [...live, ...rest];
-  })();
+  const filtered = matches.filter(m => mainTab === "matches" ? true : m.status === mainTab);
 
   return (
-    <div className="min-h-screen bg-green-950 relative">
-      <div className="fixed inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1920&q=80)` }}>
-        <div className="absolute inset-0 bg-green-950/75 backdrop-blur-[2px]" />
+    <div className="min-h-screen bg-black relative">
+      <div className="fixed inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url(https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1920&q=80)" }}>
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-[2px]" />
       </div>
+
+      <nav className="sticky top-0 z-40 border-b border-red-800/30 bg-[#c0392b]/95 backdrop-blur-lg">
+        <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
+          <div className="flex items-center gap-4">
+            <Link to="/app" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
+            <span className="text-lg">⚽</span>
+            <span className="font-mono font-bold text-white text-lg">Full<span className="text-white/40">Time</span></span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <Link to="/app" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">Markets</Link>
+            <Link to="/matches" className="bg-white/15 rounded-full px-4 py-1.5 text-sm font-mono text-white font-medium">Matches</Link>
+            <Link to="/faq" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">FAQ</Link>
+            <Link to="/faucet" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">Faucet</Link>
+          </div>
+          <div />
+        </div>
+      </nav>
+
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <Link to="/app" className="text-sm text-amber-300/60 hover:text-amber-300 transition-colors font-body">&larr; Back to Dashboard</Link>
-            <h1 className="font-heading italic text-white text-5xl md:text-6xl mt-2 tracking-[-2px]">World Cup <span className="text-amber-300/60">2026</span></h1>
+            <h1 className="font-mono font-bold text-white text-5xl md:text-6xl tracking-[-2px]">
+              World Cup <span className="text-red-300/60">2026</span>
+            </h1>
+            <p className="font-mono text-xs text-white/40 mt-1">Live data via TxLINE — Hackathon Sponsor</p>
           </div>
           {lastUpdate && (
             <div className="text-right">
-              <div className="text-xs text-white/30 font-body">Live data via football-data.org</div>
-              <div className="text-xs text-amber-300/50 font-body">Updated {lastUpdate}</div>
+              <div className="text-xs text-white/20 font-mono">Auto-refresh 30s</div>
+              <div className="text-xs text-red-300/50 font-mono">Updated {lastUpdate}</div>
             </div>
           )}
         </div>
 
-        <div className="flex gap-3 mb-8">
-          {([ { key: "matches" as MainTab, label: "Matches" }, { key: "scorers" as MainTab, label: "Top Scorers" }, { key: "standings" as MainTab, label: "Standings" } ]).map(t => (
-            <button key={t.key} onClick={() => setMainTab(t.key)} className={`rounded-full px-5 py-2.5 text-sm font-body transition-all ${mainTab === t.key ? "bg-amber-500 text-black font-semibold" : "liquid-glass text-white/60 hover:text-white"}`}>{t.label}</button>
+        {/* Detail Tabs */}
+        <div className="flex gap-3 mb-6">
+          {([{ k: "matches" as DetailTab, l: "Matches" }, { k: "scorers" as DetailTab, l: "Top Scorers" }, { k: "standings" as DetailTab, l: "Standings" }, { k: "knockout" as DetailTab, l: "Knockout" }]).map(t => (
+            <button key={t.k} onClick={() => { setDetailTab(t.k); if (t.k !== "matches") setMainTab("matches"); }}
+              className={`rounded-full px-5 py-2.5 text-sm font-mono transition-all ${detailTab === t.k ? "bg-[#c0392b] text-white font-semibold" : "bg-white/[0.04] text-white/50 hover:text-white border border-white/[0.06]"}`}>
+              {t.l}
+            </button>
           ))}
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-3">
-              <div className="animate-spin w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full" />
-              <span className="text-white/40 font-body text-sm">Loading live data...</span>
-            </div>
-          </div>
-        )}
-
-        {!loading && (
+        {detailTab === "matches" && (
           <>
-            {mainTab === "matches" && (
-              <>
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                  {([ { key: "all" as MatchTab, label: "All" }, { key: "upcoming" as MatchTab, label: "Upcoming" }, { key: "live" as MatchTab, label: "Live" }, { key: "finished" as MatchTab, label: "Results" } ]).map(t => (
-                    <button key={t.key} onClick={() => setMatchTab(t.key)} className={`rounded-full px-4 py-1.5 text-xs font-body transition-all whitespace-nowrap ${matchTab === t.key ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"}`}>{t.label}</button>
-                  ))}
-                </div>
-                <div className="space-y-3">
-                  {filteredMatches.map(m => (
-                    <motion.div key={m.id} initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} className="liquid-glass rounded-[1.25rem] p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 text-xs text-white/40 font-body mb-1">
-                            {m.status === "live" && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse font-bold">LIVE</span>}
-                            {m.status === "finished" && <span className="text-white/30">FT</span>}
-                            {m.status === "upcoming" && <span className="text-white/30">Upcoming</span>}
-                            {m.group && <span>{m.group}</span>}
-                          </div>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-lg text-white/90 font-body font-medium truncate">{m.homeFlag} {m.homeTeam}</span>
-                            <span className="text-2xl font-heading italic text-amber-400 shrink-0">{m.homeScore !== null && m.awayScore !== null ? `${m.homeScore} - ${m.awayScore}` : "vs"}</span>
-                            <span className="text-lg text-white/90 font-body font-medium truncate">{m.awayTeam} {m.awayFlag}</span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-white/30 font-body">
-                            {m.date && <span>{m.date} {m.time}</span>}
-                            {m.minute && <span className="text-amber-300">{m.minute}</span>}
-                            {m.venue && <span className="truncate">{m.venue}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </>
-            )}
+            {/* Match Tabs */}
+            <div className="flex gap-3 mb-6">
+              {([{ k: "matches" as MainTab, l: "All" }, { k: "live" as MainTab, l: "Live" }, { k: "upcoming" as MainTab, l: "Upcoming" }, { k: "finished" as MainTab, l: "Results" }]).map(t => (
+                <button key={t.k} onClick={() => setMainTab(t.k)} className={`rounded-full px-4 py-2 text-xs font-mono transition-all ${mainTab === t.k ? "bg-white/10 text-white font-semibold border border-white/10" : "text-white/40 hover:text-white"}`}>
+                  {t.l} {t.k !== "matches" && <span className="opacity-50">({matches.filter(m => m.status === t.k).length})</span>}
+                </button>
+              ))}
+            </div>
 
-            {mainTab === "scorers" && (
-              <div className="space-y-3">
-                {scorers.map((s, i) => (
-                  <div key={s.id} className="liquid-glass rounded-[1.25rem] p-4 flex items-center gap-4">
-                    <span className={`font-heading italic text-2xl w-8 ${i === 0 ? "text-amber-400" : "text-white/30"}`}>{i + 1}</span>
-                    <span className="text-lg">{s.flag}</span>
-                    <div className="flex-1 min-w-0"><div className="text-white/90 font-body font-medium">{s.player}</div><div className="text-xs text-white/40 font-body">{s.team}</div></div>
-                    <div className="text-right"><span className="font-heading italic text-2xl text-amber-400">{s.goals}</span><div className="text-xs text-white/30 font-body">{s.assists} assists · {s.matches} matches</div></div>
-                  </div>
-                ))}
+            {loading && (
+              <div className="flex items-center justify-center py-20 gap-3">
+                <div className="animate-spin w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full" />
+                <span className="text-white/30 font-mono text-sm">Loading from TxLINE...</span>
               </div>
             )}
 
-            {mainTab === "standings" && (
-              <div className="space-y-6">
-                {Array.from(new Set(standings.map(s => s.group))).map(group => (
-                  <div key={group} className="liquid-glass-strong rounded-[1.25rem] p-4">
-                    <h3 className="font-heading italic text-white text-xl mb-3">{group}</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm font-body">
-                        <thead><tr className="text-white/30 text-xs border-b border-white/5">{["Pos","Team","P","W","D","L","GF","GA","Pts"].map(h => <th key={h} className="p-2 text-left font-medium">{h}</th>)}</tr></thead>
-                        <tbody>
-                          {standings.filter(s => s.group === group).map(s => (
-                            <tr key={`${group}-${s.team}`} className="border-b border-white/5">
-                              <td className="p-2 text-white/60">{s.position}</td>
-                              <td className="p-2 text-white/90">{s.flag} {s.team}</td>
-                              <td className="p-2 text-white/40">{s.played}</td><td className="p-2 text-white/40">{s.won}</td><td className="p-2 text-white/40">{s.draw}</td><td className="p-2 text-white/40">{s.lost}</td>
-                              <td className="p-2 text-white/40">{s.goalsFor}</td><td className="p-2 text-white/40">{s.goalsAgainst}</td>
-                              <td className="p-2 text-amber-400 font-semibold">{s.points}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+            {error && <div className="mb-6 bg-red-500/5 border border-red-500/10 rounded-2xl p-4"><p className="text-red-400/60 font-mono text-xs">{error}</p></div>}
+
+            {!loading && filtered.length === 0 && (
+              <div className="text-center py-20"><p className="text-white/30 font-mono text-sm">No matches available</p></div>
+            )}
+
+            {!loading && (
+              <div className="space-y-3">
+                {filtered.map(m => (
+                  <div key={m.id} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-5 flex items-center gap-4 hover:border-white/10 transition-colors">
+                    <div className="shrink-0 w-20 text-center">
+                      <span className="font-mono text-xs text-white/30">#{m.id}</span>
+                      <div className={`mt-1 text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded-full ${m.status === "live" ? "bg-red-500/20 text-red-400 animate-pulse" : m.status === "finished" ? "bg-white/10 text-white/40" : "bg-white/5 text-white/30"}`}>
+                        {m.status === "live" ? "LIVE" : m.status}
+                      </div>
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="font-mono text-white font-semibold text-sm">{m.homeFlag} {m.home}</span>
+                        <span className={`font-mono text-xl font-bold shrink-0 w-16 text-center ${m.status === "live" ? "text-red-400" : m.status === "finished" ? "text-white" : "text-white/40"}`}>
+                          {m.homeScore !== null && m.awayScore !== null ? `${m.homeScore} - ${m.awayScore}` : "vs"}
+                        </span>
+                        <span className="font-mono text-white font-semibold text-sm">{m.awayFlag} {m.away}</span>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="font-mono text-xs text-white/40">{m.date} · {m.time}</div>
+                        {m.phase && <div className="font-mono text-[10px] text-white/20 mt-0.5">{m.phase}</div>}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -303,11 +271,114 @@ export default function Matches() {
             )}
           </>
         )}
-        {error && (
-          <div className="text-center mt-8">
-            <p className="text-white/30 font-body text-xs">{error === "live_unavailable" ? "Live data temporarily unavailable — showing demo data" : error}</p>
+
+        {detailTab === "scorers" && (
+          <div className="space-y-2">
+            {scorers.map((s, i) => (
+              <div key={s.player} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 flex items-center gap-4">
+                <span className={`font-mono text-lg w-8 shrink-0 ${i === 0 ? "text-red-400 font-bold" : i < 3 ? "text-red-300/60" : "text-white/30"}`}>{i + 1}</span>
+                <span className="text-lg shrink-0">{s.flag}</span>
+                <div className="flex-1"><span className="font-mono font-semibold text-white text-sm">{s.player}</span><span className="ml-2 font-mono text-xs text-white/30">{s.team}</span></div>
+                <div className="text-right shrink-0"><span className="font-mono text-lg text-red-400 font-bold">{s.goals}</span><div className="text-[10px] text-white/25 font-mono">{s.assists} assists · {s.matches} MP</div></div>
+              </div>
+            ))}
+            <p className="text-center font-mono text-[10px] text-white/15 mt-2">{usingLiveData ? "Live data via football-data.org" : "Demo data — set VITE_FOOTBALL_API_KEY for live updates"}</p>
           </div>
         )}
+
+        {detailTab === "standings" && (
+          <div className="space-y-6">
+            {(() => {
+              if (standings.length > 0) {
+                const grouped: Record<string, FDStanding[]> = {};
+                for (const s of standings) { if (!grouped[s.group]) grouped[s.group] = []; grouped[s.group].push(s); }
+                return Object.entries(grouped).map(([group, teams]) => (
+                  <div key={group}>
+                    <h3 className="font-mono text-sm text-red-300/60 mb-3">{group}</h3>
+                    <div className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl overflow-hidden">
+                      <table className="w-full text-left">
+                        <thead><tr className="text-white/25 text-[10px] border-b border-white/[0.04]">{["#","Team","P","W","D","L","GF","GA","Pts"].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
+                        <tbody>
+                          {teams.sort((a,b) => a.pos-b.pos).map(s => (
+                            <tr key={s.team} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                              <td className="p-2 font-mono text-xs text-white/40">{s.pos}</td>
+                              <td className="p-2 font-mono text-xs text-white font-medium">{s.flag} {s.team}</td>
+                              <td className="p-2 font-mono text-xs text-white/40">{s.p}</td>
+                              <td className="p-2 font-mono text-xs text-white/40">{s.w}</td>
+                              <td className="p-2 font-mono text-xs text-white/40">{s.d}</td>
+                              <td className="p-2 font-mono text-xs text-white/40">{s.l}</td>
+                              <td className="p-2 font-mono text-xs text-white/40">{s.gf}</td>
+                              <td className="p-2 font-mono text-xs text-white/40">{s.ga}</td>
+                              <td className="p-2 font-mono text-xs text-red-400 font-bold">{s.pts}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ));
+              }
+              return STANDINGS.map(g => (
+                <div key={g.group}>
+                  <h3 className="font-mono text-sm text-red-300/60 mb-3">{g.group}</h3>
+                  <div className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl overflow-hidden">
+                    <table className="w-full text-left">
+                      <thead><tr className="text-white/25 text-[10px] border-b border-white/[0.04]">{["#","Team","P","W","D","L","GF","GA","Pts"].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
+                      <tbody>
+                        {g.teams.map(s => (
+                          <tr key={s.team} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                            <td className="p-2 font-mono text-xs text-white/40">{s.pos}</td>
+                            <td className="p-2 font-mono text-xs text-white font-medium">{s.flag} {s.team}</td>
+                            <td className="p-2 font-mono text-xs text-white/40">{s.p}</td>
+                            <td className="p-2 font-mono text-xs text-white/40">{s.w}</td>
+                            <td className="p-2 font-mono text-xs text-white/40">{s.d}</td>
+                            <td className="p-2 font-mono text-xs text-white/40">{s.l}</td>
+                            <td className="p-2 font-mono text-xs text-white/40">{s.gf}</td>
+                            <td className="p-2 font-mono text-xs text-white/40">{s.ga}</td>
+                            <td className="p-2 font-mono text-xs text-red-400 font-bold">{s.pts}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ));
+            })()}
+            <p className="text-center font-mono text-[10px] text-white/15 mt-2">{usingLiveData ? "Live data via football-data.org" : "Demo data — set VITE_FOOTBALL_API_KEY for live updates"}</p>
+          </div>
+        )}
+
+        {detailTab === "knockout" && (
+          <div className="space-y-8">
+            {KNOCKOUT.map((round) => (
+              <div key={round.round}>
+                <h3 className="font-mono text-sm text-red-300/60 mb-3 tracking-wider uppercase">{round.round}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {round.matches.map((m, mi) => (
+                    <div key={mi} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 hover:border-white/10 transition-colors">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="font-mono font-semibold text-white text-sm">{m.hf} {m.h}</span>
+                        <span className={`font-mono font-bold text-lg shrink-0 ${m.hs !== null && m.as !== null ? "text-white" : "text-white/30"}`}>
+                          {m.hs !== null && m.as !== null ? `${m.hs} - ${m.as}` : "vs"}
+                        </span>
+                        <span className="font-mono font-semibold text-white text-sm text-right">{m.a} {m.af}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-mono text-white/25">
+                        <span>{m.date} · {m.time}</span>
+                        <span className="text-white/15 truncate ml-2">{m.venue}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <p className="text-center font-mono text-[10px] text-white/15 mt-2">Demo bracket — set VITE_FOOTBALL_API_KEY for live updates</p>
+          </div>
+        )}
+
+        <div className="mt-10 text-center">
+          <p className="font-mono text-[10px] text-white/15">{error ? error : "Live data via TxLINE (TxODDS) — Official Hackathon Sponsor · Auto-refresh 30s"}</p>
+        </div>
       </div>
     </div>
   );
