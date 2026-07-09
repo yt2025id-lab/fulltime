@@ -12,7 +12,7 @@ import {
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import "@solana/wallet-adapter-react-ui/styles.css";
-import { clusterApiUrl } from "@solana/web3.js";
+import { clusterApiUrl, PublicKey } from "@solana/web3.js";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
 
 export const FULLTIME_ID = "58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x";
@@ -39,9 +39,12 @@ function AnchorProgramProvider({ children }: { children: ReactNode }) {
   const program = useMemo(() => {
     if (!connection || !idl) return null;
     if (!wallet) {
-      // read-only: no wallet needed to fetch markets
-      const provider = new AnchorProvider(connection, {} as any, { commitment: "confirmed" });
-      return new Program(idl, provider);
+      try {
+        const provider = new AnchorProvider(connection, { publicKey: PublicKey.default } as any, { commitment: "confirmed" });
+        return new Program(idl, provider);
+      } catch {
+        return null;
+      }
     }
     const provider = new AnchorProvider(connection, wallet, {
       commitment: "confirmed",
