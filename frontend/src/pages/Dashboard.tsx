@@ -540,6 +540,7 @@ export default function Dashboard() {
             if (m.status === "cancelled") return false;
             if (m.question.includes("Team A") || m.question.includes("Team B")) return false;
             if (m.question.includes(" - Who wins?") && !m.question.startsWith("Will ")) return false;
+            if (fixtures.length > 0 && !fixtures.some(f => f.FixtureId === m.fixtureId)) return false;
             return true;
           }).length})</span></h2>
           <button onClick={reload} disabled={loading} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
