@@ -541,7 +541,6 @@ export default function Dashboard() {
             if (!m.isTrustless && m.status === "settled") return false;
             if (m.question.includes("Team A") || m.question.includes("Team B")) return false;
             if (m.question.includes(" - Who wins?") && !m.question.startsWith("Will ")) return false;
-            if (fixtures.length > 0 && !fixtures.some(f => f.FixtureId === m.fixtureId)) return false;
             return true;
           }).length})</span></h2>
           <button onClick={reload} disabled={loading} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
@@ -561,13 +560,10 @@ export default function Dashboard() {
               if (filter === "all") return true;
               return m.status === filter;
             }).filter(m => {
-              const isFake = m.question.includes("Team A") || m.question.includes("Team B");
-              const isBadQuestion = m.question.includes(" - Who wins?") && !m.question.startsWith("Will ");
-              if (isFake || isBadQuestion) return false;
+              if (m.question.includes("Team A") || m.question.includes("Team B")) return false;
+              if (m.question.includes(" - Who wins?") && !m.question.startsWith("Will ")) return false;
               if (!m.isTrustless && m.status === "settled") return false;
-              if (fixtures.length === 0) return true;
-              const hasFixture = fixtures.some(f => f.FixtureId === m.fixtureId);
-              return hasFixture;
+              return true;
             }).map((m, idx) => {
               const st = statusLabel(m.status);
               const myBet = myBetOnMarket(m.pubkey.toString());
