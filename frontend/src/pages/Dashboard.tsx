@@ -553,6 +553,10 @@ export default function Dashboard() {
               if (m.status === "cancelled") return false;
               if (filter === "all") return true;
               return m.status === filter;
+            }).filter(m => {
+              const hasFixture = fixtures.some(f => f.FixtureId === m.fixtureId);
+              const isFake = m.question.includes("Team A") || m.question.includes("Team B");
+              return (hasFixture || m.isTrustless) && !isFake;
             }).map((m, idx) => {
               const st = statusLabel(m.status);
               const myBet = myBetOnMarket(m.pubkey.toString());
