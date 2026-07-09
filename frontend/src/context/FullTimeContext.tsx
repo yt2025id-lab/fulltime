@@ -37,7 +37,12 @@ function AnchorProgramProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const program = useMemo(() => {
-    if (!connection || !wallet || !idl) return null;
+    if (!connection || !idl) return null;
+    if (!wallet) {
+      // read-only: no wallet needed to fetch markets
+      const provider = new AnchorProvider(connection, {} as any, { commitment: "confirmed" });
+      return new Program(idl, provider);
+    }
     const provider = new AnchorProvider(connection, wallet, {
       commitment: "confirmed",
     });
