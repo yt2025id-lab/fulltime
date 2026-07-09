@@ -250,6 +250,18 @@ export default function Dashboard() {
   const openMarket = async (marketPk: PublicKey) => {
     if (!program) return;
     try {
+      mark("Opening market...");
+      await program.methods.openMarket()
+        .accounts({ market: marketPk })
+        .rpc();
+      setStatus({ type: "success", msg: "Market opened!" });
+      reload();
+    } catch (e: any) { setStatus({ type: "error", msg: e.message?.slice(0, 120) || String(e) }); }
+  };
+
+  const closeBetting = async (marketPk: PublicKey) => {
+    if (!program) return;
+    try {
       mark("Closing betting...");
       await program.methods.closeBetting()
         .accounts({ market: marketPk })

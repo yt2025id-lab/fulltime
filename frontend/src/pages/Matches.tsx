@@ -91,7 +91,7 @@ export default function Matches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [scorers, setScorers] = useState<FDScorer[]>(TOP_SCORERS);
   const [standings, setStandings] = useState<FDStanding[]>([]);
-  const [knockout, setKnockout] = useState<{ round: string; matches: FDKnockoutMatch[] }[]>(KNOCKOUT);
+  const [knockout, setKnockout] = useState<{ round: string; matches: FDKnockoutMatch[] }[]>(KNOCKOUT as any);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState("");
