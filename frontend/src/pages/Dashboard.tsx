@@ -556,7 +556,8 @@ export default function Dashboard() {
             }).filter(m => {
               const hasFixture = fixtures.some(f => f.FixtureId === m.fixtureId);
               const isFake = m.question.includes("Team A") || m.question.includes("Team B");
-              return (hasFixture || m.isTrustless) && !isFake;
+              const isBadQuestion = m.question.includes(" - Who wins?") && !m.question.startsWith("Will ");
+              return hasFixture && !isFake && !isBadQuestion;
             }).map((m, idx) => {
               const st = statusLabel(m.status);
               const myBet = myBetOnMarket(m.pubkey.toString());
