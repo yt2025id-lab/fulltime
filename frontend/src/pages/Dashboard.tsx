@@ -29,6 +29,7 @@ interface UIMarket {
   status: string;
   winningOption: number;
   isTrustless: boolean;
+  settlementRoot: string;
 }
 
 interface UIBet {
@@ -145,6 +146,7 @@ export default function Dashboard() {
           status: fStatus,
           winningOption: acc.winningOption ?? acc.winning_option ?? 255,
           isTrustless: acc.isTrustless ?? acc.is_trustless ?? false,
+          settlementRoot: acc.settlementRoot?.toBase58 ? acc.settlementRoot.toBase58() : (acc.settlement_root?.toBase58 ? acc.settlement_root.toBase58() : ""),
         };
       });
       setMarkets(mapped);
@@ -515,18 +517,28 @@ export default function Dashboard() {
               const canCancel = isCreator && ["pending", "open", "closed"].includes(m.status);
               const isCancelled = m.status === "cancelled";
 
+              const fixture = fixtures.find(f => f.FixtureId === m.fixtureId);
+              const home = fixture ? (fixture.Participant1IsHome ? fixture.Participant1 : fixture.Participant2) : null;
+              const away = fixture ? (fixture.Participant1IsHome ? fixture.Participant2 : fixture.Participant1) : null;
+
               return (
                 <GlowCard key={m.pubkey.toString()} className="!min-h-0">
                   <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs text-white/30 font-mono">#{m.fixtureId || idx + 1}</span>
-                      {m.isTrustless && <span className="ml-2 text-xs text-red-400/60 font-mono bg-red-400/10 rounded-full px-2 py-0.5">Trustless</span>}
+                      {m.isTrustless && <span className="ml-2 text-xs text-green-400 font-mono bg-green-400/10 rounded-full px-2 py-0.5 inline-flex items-center gap-0.5">⚡ TRUSTLESS</span>}
                       {!m.isTrustless && <span className="ml-2 text-xs text-blue-400/60 font-mono bg-blue-400/10 rounded-full px-2 py-0.5">Manual</span>}
+                      {m.isTrustless && m.status === "settled" && m.settlementRoot && (
+                        <span className="ml-2 text-xs text-green-300/70 font-mono bg-green-500/5 rounded-full px-2 py-0.5 border border-green-500/10">TxLINE verified · {f(m.settlementRoot)}</span>
+                      )}
                     </div>
                     <span className={`text-xs font-mono font-semibold ${st.color}`}>{st.label}</span>
                   </div>
-                  <p className="text-white font-mono font-medium text-sm mb-2">{m.question}</p>
+                  <p className="text-white font-mono font-medium text-sm mb-1">{m.question}</p>
+                  {home && away && (
+                    <p className="text-xs text-white/20 font-mono mb-1">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</p>
+                  )}
                   <p className="text-xs text-white/30 font-mono mb-3">Deadline: {dt(m.closeTime)}</p>
 
                   {!isCancelled && (

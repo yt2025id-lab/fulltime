@@ -1,4 +1,4 @@
-const TXLINE_API = import.meta.env.DEV ? "/api/txline" : "https://txline-dev.txodds.com";
+const TXLINE_API = "https://txline-dev.txodds.com";
 
 let cachedJwt: string | null = null;
 

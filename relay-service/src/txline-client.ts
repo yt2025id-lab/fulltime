@@ -103,6 +103,25 @@ export class TxLineClient {
 
   // ─── Authentication ──────────────────────────────────────────
   async authenticate(): Promise<void> {
+    // Skip on-chain subscription if env vars already have valid credentials
+    const envJwt = process.env.TXLINE_JWT;
+    const envApiToken = process.env.TXLINE_API_TOKEN;
+    if (envJwt && envApiToken) {
+      this.jwt = envJwt;
+      this.apiToken = envApiToken;
+      this.httpClient = axios.create({
+        timeout: 30000,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.jwt}`,
+          "X-Api-Token": this.apiToken!,
+        },
+        baseURL: this.apiOrigin,
+      });
+      console.log("[TxLINE] Using credentials from .env");
+      return;
+    }
+
     // Step 1: Guest JWT
     const authRes = await axios.post(
       `${this.apiOrigin}/auth/guest/start`

@@ -65,8 +65,11 @@ async function scanMarkets(
 
   try {
     // Market account discriminator = first 8 bytes of SHA256("account:Market")
-    const discriminator = anchor.utils.sha256
-      .hash("account:Market")
+    const crypto = require("crypto");
+    const discriminator = crypto
+      .createHash("sha256")
+      .update("account:Market")
+      .digest()
       .slice(0, 8);
     const discBase58 = require("bs58").encode(discriminator);
 

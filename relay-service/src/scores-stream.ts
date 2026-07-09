@@ -228,27 +228,35 @@ export class ScoresStream extends EventEmitter {
   }
 
   private processScoreEvent(data: any): void {
-    // TxLINE scores event structure: { fixtureId, gameState/phaseId, seq, ts, stats, ... }
-    const fixtureId = data?.fixtureId ?? data?.fixture_id;
-    const phaseId =
-      data?.gameState ??
-      data?.phaseId ??
-      data?.phase_id ??
-      data?.state;
-    const seq = data?.seq ?? data?.sequence;
-    const ts = data?.ts ?? data?.timestamp ?? Date.now();
+    // TxLINE scores event structure: { FixtureId, GameState, seq, ts, ... } or { fixtureId, gameState, ... }
+    const fixtureId = data?.FixtureId ?? data?.fixtureId ?? data?.fixture_id;
+    let rawPhase = data?.GameState ?? data?.gameState ?? data?.phaseId ?? data?.phase_id ?? data?.state;
+    const seq = data?.Seq ?? data?.seq ?? data?.sequence;
+    const ts = data?.Ts ?? data?.ts ?? data?.timestamp ?? Date.now();
 
-    if (!fixtureId || phaseId === undefined) {
-      // Unknown format — log and skip
+    if (!fixtureId || rawPhase === undefined || rawPhase === null) {
       console.debug("[SSE] Unknown event format:", JSON.stringify(data).slice(0, 200));
       return;
     }
 
+    // Phase can be string ("scheduled", "playing") or number (1, 2, 5...)
+    let phaseId: number;
+    if (typeof rawPhase === "string") {
+      const phaseMap: Record<string, number> = {
+        scheduled: 1, playing: 2, halftime: 4, paused: 3,
+        finished: 5, cancelled: 16, abandoned: 15,
+        aet: 7, ap: 12, postponed: 1,
+      };
+      phaseId = phaseMap[rawPhase.toLowerCase()] ?? 1;
+    } else {
+      phaseId = Number(rawPhase);
+    }
+
     const prevPhase = this.seenFixtures.get(fixtureId);
-    if (prevPhase === phaseId) return; // no transition
+    if (prevPhase === phaseId) return;
     this.seenFixtures.set(fixtureId, phaseId);
 
-    const phaseName = PHASE_NAMES[phaseId] ?? `Phase ${phaseId}`;
+    const phaseName = PHASE_NAMES[phaseId] ?? rawPhase ?? `Phase ${phaseId}`;
     console.log(
       `[SSE] ⚽ Fixture #${fixtureId} → ${phaseName} (seq=${seq})`
     );
