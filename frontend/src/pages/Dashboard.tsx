@@ -101,6 +101,15 @@ export default function Dashboard() {
   const [creating, setCreating] = useState(false);
 
   const [fixtures, setFixtures] = useState<TxLineFixture[]>([]);
+  const QF_FIXTURES = [18209181, 18218149, 18213979, 18222446];
+  const QF_TEAMS = ["france", "morocco", "spain", "belgium", "norway", "england", "argentina", "switzerland"];
+
+  function isQfMarket(fixtureId: number, question: string): boolean {
+    const base = QF_FIXTURES.find(q => fixtureId >= q && fixtureId < q + 1_000_000);
+    if (base) return true;
+    const lower = question.toLowerCase();
+    return QF_TEAMS.some(t => lower.includes(t));
+  }
   const [showFixtures, setShowFixtures] = useState(true);
 
   const [betMarket, setBetMarket] = useState<string | null>(null);
@@ -539,9 +548,7 @@ export default function Dashboard() {
           <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">Markets <span className="text-white/30 text-lg">({markets.filter(m => {
             if (m.status === "cancelled") return false;
             if (!m.isTrustless && m.status === "settled") return false;
-            if (m.question.includes("Team A") || m.question.includes("Team B")) return false;
-            const whoWins = m.question.includes("— Who wins?") || m.question.includes("- Who wins?");
-            if (whoWins && !m.question.startsWith("Will ")) return false;
+            if (!isQfMarket(m.fixtureId, m.question)) return false;
             return true;
           }).length})</span></h2>
           <button onClick={reload} disabled={loading} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
@@ -561,10 +568,8 @@ export default function Dashboard() {
               if (filter === "all") return true;
               return m.status === filter;
             }).filter(m => {
-              if (m.question.includes("Team A") || m.question.includes("Team B")) return false;
-              const whoWins = m.question.includes("— Who wins?") || m.question.includes("- Who wins?");
-              if (whoWins && !m.question.startsWith("Will ")) return false;
               if (!m.isTrustless && m.status === "settled") return false;
+              if (!isQfMarket(m.fixtureId, m.question)) return false;
               return true;
             }).map((m, idx) => {
               const st = statusLabel(m.status);
@@ -659,7 +664,7 @@ export default function Dashboard() {
                         <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-red-300 disabled:opacity-30">Resolve NO</button>
                       </>
                     )}
-                    {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-red-400/60 hover:text-red-400 transition-colors">Cancel</button>}
+                    {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-red-400 hover:text-red-300 transition-colors">🗑 Delete</button>}
                   </div>
                   </div>
                 </GlowCard>
