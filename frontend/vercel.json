@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/txline/(.*)", "destination": "/api/txline-proxy?proxy=$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

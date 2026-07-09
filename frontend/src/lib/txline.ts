@@ -1,4 +1,4 @@
-const TXLINE_API = "https://txline-dev.txodds.com";
+const TXLINE_API = "/api/txline";
 
 let cachedJwt: string | null = null;
 

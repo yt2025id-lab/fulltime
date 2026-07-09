@@ -131,28 +131,58 @@ export default function Dashboard() {
     if (!connection) return;
     setLoading(true);
     try {
-      const idlPath = "/idl.json";
-      const idl = await fetch(idlPath).then(r => r.json());
-      const provider = new AnchorProvider(connection, { publicKey: PublicKey.default } as any, { commitment: "confirmed" });
-      const prog = new Program(idl, provider);
-      const all = await (prog as any).account.market.all();
-      const mapped: UIMarket[] = all.map((a: any) => {
-        const acc = a.account;
-        const fStatus = Object.keys(acc.status || {})[0] || "pending";
+      // Market discriminator: first 8 bytes of SHA256("account:Market") → bs58
+      const discB58 = "dkokXHR3DTw";
+
+      const resp = await fetch(connection.rpcEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0", id: 1,
+          method: "getProgramAccounts",
+          params: [FULLTIME_ID, {
+            commitment: "confirmed",
+            encoding: "base64",
+            filters: [{ memcmp: { offset: 0, bytes: discB58 } }],
+          }],
+        }),
+      });
+      const raw = await resp.json();
+
+      const mapped: UIMarket[] = (raw.result || []).map((r: any) => {
+        const data = Uint8Array.from(atob(r.account.data[0]), c => c.charCodeAt(0));
+        let off = 8; // skip discriminator
+        const readU64 = (o: number) => { const v = new DataView(data.buffer.slice(data.byteOffset + o, data.byteOffset + o + 8)); return Number(v.getBigUint64(0, true)); };
+        const readI64 = (o: number) => { const v = new DataView(data.buffer.slice(data.byteOffset + o, data.byteOffset + o + 8)); return Number(v.getBigInt64(0, true)); };
+        const readU32 = (o: number) => { const v = new DataView(data.buffer.slice(data.byteOffset + o, data.byteOffset + o + 4)); return v.getUint32(0, true); };
+        const readU16 = (o: number) => { const v = new DataView(data.buffer.slice(data.byteOffset + o, data.byteOffset + o + 2)); return v.getUint16(0, true); };
+        const readU8 = (o: number) => data[o];
+
+        const fixtureId = readU64(off); off += 8;
+        const qLen = readU32(off); off += 4;
+        const question = new TextDecoder().decode(data.slice(off, off + qLen)); off += qLen;
+        const creator = new PublicKey(data.slice(off, off + 32)); off += 32;
+        off += 1; // outcome_count
+        off += 8; // total_pool
+        const poolYes = readU64(off); off += 8;
+        const poolNo = readU64(off); off += 8;
+        off += 8; // betting_open_time
+        const closeTime = readI64(off); off += 8;
+        const statusByte = readU8(off); off += 1;
+        off += 1; // winning_option
+        const isTrustless = readU8(off) === 1;
+
+        const statusMap = ["created", "open", "closed", "settled", "cancelled", "disputed"];
         return {
-          pubkey: a.publicKey,
-          fixtureId: Number(acc.fixtureId ?? acc.fixture_id ?? 0),
-          question: acc.question || "",
-          creator: (acc.creator?.toBase58 ? acc.creator.toBase58() : String(acc.creator || "")),
-          poolYes: Number(acc.poolYes ?? acc.pool_yes ?? 0),
-          poolNo: Number(acc.poolNo ?? acc.pool_no ?? 0),
-          totalPool: Number(acc.totalPool ?? acc.total_pool ?? 0),
-          openTime: Number(acc.bettingOpenTime ?? acc.betting_open_time ?? 0),
-          closeTime: Number(acc.bettingCloseTime ?? acc.betting_close_time ?? 0),
-          status: fStatus,
-          winningOption: acc.winningOption ?? acc.winning_option ?? 255,
-          isTrustless: acc.isTrustless ?? acc.is_trustless ?? false,
-          settlementRoot: acc.settlementRoot?.toBase58 ? acc.settlementRoot.toBase58() : (acc.settlement_root?.toBase58 ? acc.settlement_root.toBase58() : ""),
+          pubkey: r.pubkey,
+          fixtureId,
+          question,
+          creator: creator.toBase58(),
+          poolYes, poolNo, totalPool: poolYes + poolNo,
+          openTime: 0, closeTime,
+          status: statusMap[statusByte] || "created",
+          winningOption: 255, isTrustless,
+          settlementRoot: "",
         };
       });
       setMarkets(mapped);
