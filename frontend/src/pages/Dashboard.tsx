@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Connection, clusterApiUrl } from "@solana/web3.js";
 import { fetchFixtures, type TxLineFixture } from "../lib/txline";
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import GlowCard from "../components/GlowCard";
 import BN from "bn.js";
 
@@ -132,8 +133,8 @@ export default function Dashboard() {
     try {
       const idlPath = "/idl.json";
       const idl = await fetch(idlPath).then(r => r.json());
-      const provider = new (await import("@coral-xyz/anchor")).AnchorProvider(connection, { publicKey: PublicKey.default } as any, { commitment: "confirmed" });
-      const prog = new (await import("@coral-xyz/anchor")).Program(idl, provider);
+      const provider = new AnchorProvider(connection, { publicKey: PublicKey.default } as any, { commitment: "confirmed" });
+      const prog = new Program(idl, provider);
       const all = await (prog as any).account.market.all();
       const mapped: UIMarket[] = all.map((a: any) => {
         const acc = a.account;
