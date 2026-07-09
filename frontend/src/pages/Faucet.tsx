@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, clusterApiUrl } from "@solana/web3.js";
 import { motion } from "framer-motion";
+import GlowCard from "../components/GlowCard";
+
+function f(a: string) { return `${a.slice(0, 6)}...${a.slice(-4)}`; }
+function solDisplay(lp: number) { return Math.floor(lp / LAMPORTS_PER_SOL).toString(); }
 
 const fadeIn = {
   initial: { filter: "blur(8px)", opacity: 0, y: 20 },
@@ -13,27 +17,33 @@ const fadeIn = {
 export default function Faucet() {
   const { publicKey, connected } = useWallet();
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{ type: "success" | "error" | "info"; msg: string } | null>(null);
-  const [txSig, setTxSig] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
 
-  const requestAirdrop = async (amount: number = 1) => {
+  useEffect(() => {
+    if (connected && publicKey) {
+      const conn = new Connection(clusterApiUrl("devnet"), "confirmed");
+      conn.getBalance(publicKey).then(setBalance).catch(() => {});
+    }
+  }, [connected, publicKey]);
+
+  const requestAirdrop = async () => {
     if (!publicKey) return;
     setLoading(true);
     setStatus(null);
-    setTxSig(null);
     try {
       const conn = new Connection(clusterApiUrl("devnet"), "confirmed");
-      const sig = await conn.requestAirdrop(publicKey, amount * LAMPORTS_PER_SOL);
-      setTxSig(sig);
-      setStatus({ type: "success", msg: `${amount} SOL successfully airdropped to your wallet!` });
+      const sig = await conn.requestAirdrop(publicKey, LAMPORTS_PER_SOL);
+      await conn.confirmTransaction(sig, "confirmed");
+      const bal = await conn.getBalance(publicKey);
+      setBalance(bal);
+      setStatus({ type: "success", msg: `+1 SOL! Balance: ${solDisplay(bal)} SOL` });
     } catch (e: any) {
-      const msg = e.message?.toLowerCase() || "";
-      if (msg.includes("429") || msg.includes("rate") || msg.includes("limit")) {
-        setStatus({ type: "error", msg: "Rate limited by Solana public RPC. Try again in ~30 seconds, or use the fallback faucet below." });
-      } else if (msg.includes("insufficient") || msg.includes("balance")) {
-        setStatus({ type: "error", msg: "Faucet balance depleted. Try the official faucet at faucet.solana.com." });
+      const msg = (e.message || String(e)).toLowerCase();
+      if (msg.includes("429") || msg.includes("rate")) {
+        setStatus({ type: "error", msg: "Rate limited. Use faucet.solana.com directly." });
       } else {
-        setStatus({ type: "error", msg: e.message?.slice(0, 120) || "Unknown error. Try again." });
+        setStatus({ type: "error", msg: "Request failed. Try faucet.solana.com." });
       }
     }
     setLoading(false);
@@ -68,82 +78,70 @@ export default function Faucet() {
           <h1 className="font-mono font-bold text-white text-5xl md:text-6xl tracking-[-2px] mb-4">
             Devnet <span className="text-red-300/60">SOL</span>
           </h1>
-          <p className="font-mono text-sm text-white/40">Free test SOL for FullTime on Solana Devnet. No real value — just for testing.</p>
+          <p className="font-mono text-sm text-white/40">Free test SOL for FullTime on Solana Devnet</p>
         </motion.div>
+
+        {connected && publicKey && (
+          <motion.div {...fadeIn} transition={{ duration: 0.5 }} className="mb-6">
+            <GlowCard className="!min-h-0">
+              <div className="p-4 flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <div className="font-mono text-white text-sm font-semibold">Phantom Wallet</div>
+                  <div className="font-mono text-xs text-white/30">{f(publicKey.toBase58())}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono text-xs text-white/40">Balance</div>
+                  <div className="font-mono text-white text-xl font-bold">{balance !== null ? solDisplay(balance) : "—"} <span className="text-red-300/60 text-sm">SOL</span></div>
+                  <div className="font-mono text-[10px] text-amber-400/50 mt-0.5">Devnet — no real value</div>
+                </div>
+              </div>
+            </GlowCard>
+          </motion.div>
+        )}
 
         {!connected ? (
           <motion.div {...fadeIn} transition={{ duration: 0.6, delay: 0.2 }} className="flex flex-col items-center gap-4">
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 w-full text-center">
-              <p className="font-mono text-sm text-white/50 mb-4">Connect your Phantom wallet to request devnet SOL.</p>
-              <p className="font-mono text-xs text-white/30 mb-6">Make sure Phantom is set to <span className="text-red-300/60">Devnet</span> mode (Settings → Developer Settings → Testnet Mode).</p>
-              <WalletMultiButton className="!bg-red-600 hover:!bg-red-500 !text-white !rounded-full !px-6 !py-3 !text-sm !font-semibold !font-mono !h-auto !transition-colors" />
-            </div>
+            <GlowCard className="!min-h-0">
+              <div className="p-6 w-full text-center">
+                <p className="font-mono text-sm text-white/50 mb-4">Connect Phantom to request devnet SOL</p>
+                <p className="font-mono text-xs text-white/30 mb-6">Settings → Developer Settings → Testnet Mode → <span className="text-red-300/60">Devnet</span></p>
+                <WalletMultiButton className="!bg-red-600 hover:!bg-red-500 !text-white !rounded-full !px-6 !py-3 !text-sm !font-semibold !font-mono !h-auto !transition-colors" />
+              </div>
+            </GlowCard>
           </motion.div>
         ) : (
-          <>
-            <motion.div {...fadeIn} transition={{ duration: 0.6, delay: 0.2 }}>
-              <div className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.08] rounded-2xl p-6 w-full mb-4">
-                <p className="font-mono text-xs text-white/40 mb-2">Connected Wallet</p>
-                <p className="font-mono text-sm text-white/70 break-all">{publicKey?.toBase58()}</p>
-              </div>
-            </motion.div>
-
-            <motion.div {...fadeIn} transition={{ duration: 0.6, delay: 0.3 }} className="flex gap-3 mb-6">
-              <button
-                onClick={() => requestAirdrop(1)}
-                disabled={loading}
-                className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-full px-6 py-3.5 text-sm font-bold font-mono transition-colors"
-              >
-                {loading ? "..." : "Request 1 SOL"}
-              </button>
-              <button
-                onClick={() => requestAirdrop(2)}
-                disabled={loading}
-                className="flex-1 bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.08] disabled:opacity-40 disabled:cursor-not-allowed text-white/60 rounded-full px-6 py-3.5 text-sm font-semibold font-mono transition-colors"
-              >
-                {loading ? "..." : "Request 2 SOL"}
-              </button>
-            </motion.div>
+          <motion.div {...fadeIn} transition={{ duration: 0.6, delay: 0.3 }}>
+            <button
+              onClick={requestAirdrop}
+              disabled={loading}
+              className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-full px-6 py-3.5 text-sm font-bold font-mono transition-colors mb-4"
+            >
+              {loading ? "Requesting... approve in Phantom" : "Request 1 SOL"}
+            </button>
 
             {status && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`bg-white/[0.03] border rounded-2xl p-5 w-full mb-6 ${
-                  status.type === "success" ? "border-green-500/20" : status.type === "error" ? "border-red-500/20" : "border-white/[0.08]"
-                }`}
-              >
-                <p className={`font-mono text-sm ${status.type === "success" ? "text-green-400" : status.type === "error" ? "text-red-400" : "text-white/50"}`}>
-                  {status.msg}
-                </p>
-                {txSig && (
-                  <a
-                    href={`https://solscan.io/tx/${txSig}?cluster=devnet`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-mono text-xs text-white/40 hover:text-white/70 underline mt-2 inline-block"
-                  >
-                    View on Solscan ↗
-                  </a>
-                )}
-              </motion.div>
+              <GlowCard className="!min-h-0 mb-4">
+                <div className={`p-5 ${status.type === "success" ? "" : ""}`}>
+                  <p className={`font-mono text-sm ${status.type === "success" ? "text-green-400" : "text-red-400"}`}>{status.msg}</p>
+                </div>
+              </GlowCard>
             )}
 
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 w-full">
-              <p className="font-mono font-bold text-white/50 text-xs mb-3">FALLBACK FAUCETS</p>
-              <div className="space-y-2">
+            <GlowCard className="!min-h-0">
+              <div className="p-5">
+                <p className="font-mono font-bold text-white/50 text-xs mb-3">IF RATE LIMITED — USE DIRECT FAUCET</p>
                 <a href="https://faucet.solana.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between bg-white/[0.04] hover:bg-white/[0.08] rounded-full px-4 py-2.5 font-mono text-xs text-white/50 hover:text-white transition-colors">
                   faucet.solana.com <span className="text-white/20">↗</span>
                 </a>
-                <a href="https://solfaucet.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between bg-white/[0.04] hover:bg-white/[0.08] rounded-full px-4 py-2.5 font-mono text-xs text-white/50 hover:text-white transition-colors">
-                  solfaucet.com <span className="text-white/20">↗</span>
-                </a>
+                <div className="mt-3 font-mono text-[10px] text-white/20 leading-relaxed">
+                  1. <span className="text-amber-400/60">Sign in with GitHub</span> on faucet.solana.com<br />
+                  2. Copy your wallet address from above<br />
+                  3. Paste into the faucet, complete captcha<br />
+                  4. Claim up to 5 SOL per request
+                </div>
               </div>
-              <p className="font-mono text-[10px] text-white/20 mt-4">
-                These external faucets are rate-limited. If one doesn't work, try another. SOL on devnet has no real monetary value.
-              </p>
-            </div>
-          </>
+            </GlowCard>
+          </motion.div>
         )}
       </div>
     </div>

@@ -33,7 +33,7 @@ describe("FullTime E2E — YES/NO Market Flow", () => {
     // 1. CREATE (manual market, isTrustless=false)
     console.log("\n[1/7] Creating market...");
     await program.methods
-      .createMarket(new anchor.BN(fixtureId), question, ts(2), ts(3600), false)
+      .createMarket(new anchor.BN(fixtureId), question, ts(2), ts(12), false)
       .accounts({ creator: creator.publicKey }).signers([creator]).rpc({ commitment: "confirmed" });
     const m1 = await program.account.market.fetch(mpda);
     assert.strictEqual(m1.question, question);
@@ -70,7 +70,7 @@ describe("FullTime E2E — YES/NO Market Flow", () => {
 
     // 4. CLOSE BETTING
     console.log("\n[4/7] Closing betting...");
-    await sleep(3000);
+    await sleep(10000);
     await program.methods.closeBetting().accounts({ market: mpda }).rpc({ commitment: "confirmed" });
     const m4 = await program.account.market.fetch(mpda);
     assert.deepStrictEqual(m4.status, { closed: {} });
@@ -118,7 +118,7 @@ describe("FullTime E2E — YES/NO Market Flow", () => {
 
     // Create + open
     await program.methods
-      .createMarket(new anchor.BN(fixtureId), "Will Brazil win?", ts(2), ts(3600), false)
+      .createMarket(new anchor.BN(fixtureId), "Will Brazil win?", ts(2), ts(12), false)
       .accounts({ creator: creator.publicKey }).signers([creator]).rpc({ commitment: "confirmed" });
     await sleep(3500);
     await program.methods.openMarket().accounts({ market: mpda }).rpc({ commitment: "confirmed" });
@@ -129,7 +129,7 @@ describe("FullTime E2E — YES/NO Market Flow", () => {
       .accounts({ bettor: creator.publicKey, market: mpda }).signers([creator]).rpc({ commitment: "confirmed" });
 
     // Close
-    await sleep(3000);
+    await sleep(10000);
     await program.methods.closeBetting().accounts({ market: mpda }).rpc({ commitment: "confirmed" });
 
     // Cancel

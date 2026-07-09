@@ -4,8 +4,9 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
 import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Connection, clusterApiUrl } from "@solana/web3.js";
 import { fetchFixtures, type TxLineFixture } from "../lib/txline";
+import GlowCard from "../components/GlowCard";
 import BN from "bn.js";
 
 const fadeIn = {
@@ -39,6 +40,7 @@ interface UIBet {
 }
 
 function lamportsToSol(lamports: number) { return (lamports / 1e9).toFixed(4); }
+function solDisplay(lamports: number) { return Math.floor(lamports / LAMPORTS_PER_SOL).toString(); }
 
 function flagEmoji(name: string): string {
   const m: Record<string, string> = {
@@ -101,6 +103,8 @@ export default function Dashboard() {
   const [betAmount, setBetAmount] = useState("");
   const [betSide, setBetSide] = useState(0);
   const [payTx, setPayTx] = useState("idle");
+  const [balance, setBalance] = useState<number | null>(null);
+  const [showPortfolio, setShowPortfolio] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -125,28 +129,25 @@ export default function Dashboard() {
     try {
       const all = await (program as any).account.market.all();
       const mapped: UIMarket[] = all.map((a: any) => {
-        const fStatus = Object.keys(a.account.status)[0] || "pending";
+        const acc = a.account;
+        const fStatus = Object.keys(acc.status || {})[0] || "pending";
         return {
           pubkey: a.publicKey,
-          fixtureId: Number(a.account.fixtureId),
-          question: a.account.question,
-          creator: a.account.creator.toString(),
-          poolYes: Number(a.account.poolYes),
-          poolNo: Number(a.account.poolNo),
-          totalPool: Number(a.account.totalPool),
-          openTime: Number(a.account.bettingOpenTime),
-          closeTime: Number(a.account.bettingCloseTime),
+          fixtureId: Number(acc.fixtureId ?? acc.fixture_id ?? 0),
+          question: acc.question || "",
+          creator: (acc.creator?.toBase58 ? acc.creator.toBase58() : String(acc.creator || "")),
+          poolYes: Number(acc.poolYes ?? acc.pool_yes ?? 0),
+          poolNo: Number(acc.poolNo ?? acc.pool_no ?? 0),
+          totalPool: Number(acc.totalPool ?? acc.total_pool ?? 0),
+          openTime: Number(acc.bettingOpenTime ?? acc.betting_open_time ?? 0),
+          closeTime: Number(acc.bettingCloseTime ?? acc.betting_close_time ?? 0),
           status: fStatus,
-          winningOption: a.account.winningOption,
-          isTrustless: a.account.isTrustless,
+          winningOption: acc.winningOption ?? acc.winning_option ?? 255,
+          isTrustless: acc.isTrustless ?? acc.is_trustless ?? false,
         };
       });
       setMarkets(mapped);
-    } catch (e: any) {
-      if (e.message?.includes("Account does not exist")) {
-        setMarkets([]);
-      }
-    }
+    } catch (e: any) { console.error("loadMarkets:", e.message); }
     setLoading(false);
   }, [program]);
 
@@ -171,7 +172,11 @@ export default function Dashboard() {
   }, [program, loadMarkets, loadBets]);
 
   useEffect(() => {
-    if (connected) { loadMarkets(); loadBets(); }
+    if (connected && publicKey) {
+      loadMarkets(); loadBets();
+      const conn = new Connection(clusterApiUrl("devnet"), "confirmed");
+      conn.getBalance(publicKey).then(b => setBalance(b)).catch(() => {});
+    } else { setBalance(null); }
   }, [connected]);
 
   useEffect(() => {
@@ -228,8 +233,10 @@ export default function Dashboard() {
         .createMarket(new BN(0), question, new BN(openTime), new BN(closeTime), false)
         .accounts({ creator: publicKey })
         .rpc();
+      const mpda = marketPda(publicKey, 0);
+      await program.methods.openMarket().accounts({ market: mpda }).rpc();
       setQuestion(""); setDeadline("");
-      setStatus({ type: "success", msg: "Market created!" });
+      setStatus({ type: "success", msg: "Market created & opened!" });
       reload();
     } catch (e: any) {
       setStatus({ type: "error", msg: e.message?.slice(0, 120) || String(e) });
@@ -346,8 +353,8 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center justify-end">
             {connected ? (
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-white/50 font-mono hidden sm:inline">{publicKey ? f(publicKey.toBase58()) : ""}</span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowPortfolio(true)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:text-white font-mono transition-colors">Portfolio</button>
                 <button onClick={disconnect} className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/60 hover:text-red-300 font-mono transition-colors">Disconnect</button>
               </div>
             ) : (
@@ -438,7 +445,7 @@ export default function Dashboard() {
 
         {/* Markets */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">Markets <span className="text-white/30 text-lg">({markets.length})</span></h2>
+          <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">Markets <span className="text-white/30 text-lg">({markets.filter(m => m.status !== "cancelled").length})</span></h2>
           <button onClick={reload} disabled={loading} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
         </div>
 
@@ -451,7 +458,7 @@ export default function Dashboard() {
           <div className="text-center py-20"><p className="text-white/40 font-mono text-sm">No markets yet — create one above</p></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {markets.map((m, idx) => {
+            {markets.filter(m => m.status !== "cancelled").map((m, idx) => {
               const st = statusLabel(m.status);
               const myBet = myBetOnMarket(m.pubkey.toString());
               const yesPct = m.totalPool > 0 ? (m.poolYes * 100 / m.totalPool).toFixed(1) : "50";
@@ -463,7 +470,8 @@ export default function Dashboard() {
               const isCancelled = m.status === "cancelled";
 
               return (
-                <div key={m.pubkey.toString()} className="liquid-glass rounded-[1.25rem] p-5">
+                <GlowCard key={m.pubkey.toString()} className="!min-h-0">
+                  <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs text-white/30 font-mono">#{m.fixtureId || idx + 1}</span>
@@ -535,9 +543,53 @@ export default function Dashboard() {
                     )}
                     {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-red-400/60 hover:text-red-400 transition-colors">Cancel</button>}
                   </div>
-                </div>
+                  </div>
+                </GlowCard>
               );
             })}
+          </div>
+        )}
+
+        {/* Portfolio Drawer */}
+        {showPortfolio && (
+          <div className="fixed inset-0 z-50 flex" onClick={() => setShowPortfolio(false)}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="ml-auto w-full max-w-md h-full bg-[#111] border-l border-white/10 overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-mono font-bold text-white text-xl">Portfolio</h2>
+                  <button onClick={() => setShowPortfolio(false)} className="text-white/40 hover:text-white font-mono text-sm">✕</button>
+                </div>
+                {publicKey && <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 mb-6">
+                  <div className="text-xs text-white/40 font-mono mb-1">Wallet</div>
+                  <div className="font-mono text-xs text-white/50 break-all">{publicKey.toBase58().slice(0,12)}...{publicKey.toBase58().slice(-4)}</div>
+                  <div className="mt-2 font-mono text-lg text-white font-bold">{balance !== null ? solDisplay(balance) : "—"} <span className="text-red-300/60 text-sm">SOL</span></div>
+                </div>}
+                {bets.length === 0 ? (
+                  <p className="text-white/30 font-mono text-sm text-center py-8">No bets yet</p>
+                ) : (
+                  <div className="space-y-3">{bets.map(b => {
+                    const m = markets.find(x => x.pubkey.toString() === b.market);
+                    const won = m?.status === "settled" && b.optionIndex === m.winningOption;
+                    const canClaim = won && !b.claimed;
+                    const canRefund = m?.status === "cancelled" && !b.claimed;
+                    return <div key={b.pubkey.toString()} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+                      <div className="text-xs text-white/50 font-mono truncate mb-2">{m?.question || b.market.slice(0,20)}</div>
+                      <div className="flex items-center justify-between">
+                        <div><span className={`font-mono text-sm font-bold ${b.optionIndex===0?"text-green-400":"text-red-400"}`}>{b.optionIndex===0?"YES":"NO"}</span><span className="font-mono text-sm text-white/60 ml-2">{lamportsToSol(b.amount)} SOL</span></div>
+                        <div className="flex items-center gap-2">
+                          {b.claimed ? <span className="text-xs text-green-400/60 font-mono">Claimed ✓</span> :
+                           canClaim ? <button onClick={() => claimPayout(new PublicKey(b.market), b.pubkey)} className="bg-green-600 hover:bg-green-500 text-white rounded-full px-3 py-1 text-xs font-mono font-semibold">Claim</button> :
+                           canRefund ? <button onClick={() => refundBet(new PublicKey(b.market), b.pubkey)} className="bg-yellow-600 hover:bg-yellow-500 text-white rounded-full px-3 py-1 text-xs font-mono font-semibold">Refund</button> :
+                           <span className="text-xs text-white/20 font-mono">{m?.status||"—"}</span>}
+                        </div>
+                      </div>
+                    </div>;
+                  })}</div>
+                )}
+              </div>
+            </motion.div>
           </div>
         )}
 

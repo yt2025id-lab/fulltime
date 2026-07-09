@@ -2,7 +2,7 @@
 **Author:** Achmad Fauzan Ashari (Ozan_OnChain)
 **Hackathon:** TxODDS x Solana x Superteam Earn — World Cup 2026
 **Track:** Prediction Markets & Settlement ($18,000)
-**Date:** 4 Juli 2026 (Updated: 6 Juli 2026 — v2: Yes/No binary, liquid glass dark theme, 3-page layout)
+**Date:** 4 Juli 2026 (Updated: 7 Juli 2026 — v2.2: Live football-data.org, Portfolio, faucet, FAQ overhaul)
 **Deadline:** 19 Juli 2026 | **Pengumuman:** 29 Juli 2026
 
 ---
@@ -295,6 +295,30 @@ fulltime/
 - **Vercel:** `fulltime-wc.vercel.app` (auto-deploy from main)
 
 
+
+## 🎯 v2.2 — Live Data, Portfolio, UX Polish (7 Juli 2026)
+
+### Live Match Data
+- **football-data.org API** — Top Scorers, 12-group Standings (A-L), Knockout bracket live
+- Vite proxy with `loadEnv()` for API key; Vercel Edge Function for production
+- **TxLINE fixtures** — 6 World Cup matches + real-time scores overlay
+
+### Dashboard Improvements
+- **GlowCard** rotating borders | **Portfolio drawer** (slide-in, Claim/Refund)
+- **Wallet card** (balance + Devnet badge) | **Auto-open** on manual market create
+- **Filter cancelled** markets | **Snake_case field fix** in loadMarkets
+
+### New Pages & UX
+- `/faq` — 12 Q&A accordion | `/faucet` — SOL airdrop + GitHub instructions
+- **Multi-wallet**: Phantom + Solflare + Torus
+- **Design**: monospace font, brick red headers, centered nav pills, trophy marquee
+
+### Active Markets
+- 2 Trustless TxLINE: Argentina vs Egypt, Norway vs England
+- 1 Manual: "Will Haaland be top scorer?"
+- Wallet user: `8LkEf...` | Wallet dev: `52rWp...`
+
+---
 
 ## ⚠️ Remaining for Hackathon Submission
 
