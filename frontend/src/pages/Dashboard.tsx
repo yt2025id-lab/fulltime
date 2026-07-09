@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
 import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
@@ -86,6 +86,7 @@ async function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
 export default function Dashboard() {
   const { publicKey, connected, disconnect, wallet } = useWallet();
+  const { connection } = useConnection();
   const program = useProgram();
   const [now, setNow] = useState(new Date());
   const [markets, setMarkets] = useState<UIMarket[]>([]);
@@ -126,10 +127,14 @@ export default function Dashboard() {
   }, []);
 
   const loadMarkets = useCallback(async () => {
-    if (!program) return;
+    if (!connection) return;
     setLoading(true);
     try {
-      const all = await (program as any).account.market.all();
+      const idlPath = "/idl.json";
+      const idl = await fetch(idlPath).then(r => r.json());
+      const provider = new (await import("@coral-xyz/anchor")).AnchorProvider(connection, { publicKey: PublicKey.default } as any, { commitment: "confirmed" });
+      const prog = new (await import("@coral-xyz/anchor")).Program(idl, provider);
+      const all = await (prog as any).account.market.all();
       const mapped: UIMarket[] = all.map((a: any) => {
         const acc = a.account;
         const fStatus = Object.keys(acc.status || {})[0] || "pending";
@@ -152,7 +157,7 @@ export default function Dashboard() {
       setMarkets(mapped);
     } catch (e: any) { console.error("loadMarkets:", e.message); }
     setLoading(false);
-  }, [program]);
+  }, [connection]);
 
   const loadBets = useCallback(async () => {
     if (!program || !publicKey) return;
@@ -170,9 +175,8 @@ export default function Dashboard() {
     } catch {}
   }, [program, publicKey]);
 
-  useEffect(() => {
-    if (program) { loadMarkets(); loadBets(); }
-  }, [program, loadMarkets, loadBets]);
+  useEffect(() => { loadMarkets(); }, [connection]);
+  useEffect(() => { if (program && publicKey) loadBets(); }, [program, publicKey]);
 
   useEffect(() => {
     if (connected && publicKey) {
