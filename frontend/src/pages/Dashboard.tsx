@@ -538,6 +538,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">Markets <span className="text-white/30 text-lg">({markets.filter(m => {
             if (m.status === "cancelled") return false;
+            if (!m.isTrustless && m.status === "settled") return false;
             if (m.question.includes("Team A") || m.question.includes("Team B")) return false;
             if (m.question.includes(" - Who wins?") && !m.question.startsWith("Will ")) return false;
             if (fixtures.length > 0 && !fixtures.some(f => f.FixtureId === m.fixtureId)) return false;
@@ -563,6 +564,7 @@ export default function Dashboard() {
               const isFake = m.question.includes("Team A") || m.question.includes("Team B");
               const isBadQuestion = m.question.includes(" - Who wins?") && !m.question.startsWith("Will ");
               if (isFake || isBadQuestion) return false;
+              if (!m.isTrustless && m.status === "settled") return false;
               if (fixtures.length === 0) return true;
               const hasFixture = fixtures.some(f => f.FixtureId === m.fixtureId);
               return hasFixture;
