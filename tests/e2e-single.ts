@@ -42,7 +42,7 @@ describe("FullTime — Quick E2E Test", () => {
 
     console.log("1. Creating market...");
     const tx1 = await program.methods.createMarket(
-      new anchor.BN(id), "Test E2E flow",
+      new anchor.BN(id), "Brazil vs Norway — Who wins?",
       new anchor.BN(nowTs + 2), new anchor.BN(nowTs + 6), false
     ).accounts({ creator: creator.publicKey }).signers([creator]).rpc();
     console.log("   tx:", tx1);

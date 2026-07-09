@@ -84,12 +84,13 @@ function marketPda(creator: PublicKey, fixtureId: number): PublicKey {
 async function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
 export default function Dashboard() {
-  const { publicKey, connected, disconnect } = useWallet();
+  const { publicKey, connected, disconnect, wallet } = useWallet();
   const program = useProgram();
   const [now, setNow] = useState(new Date());
   const [markets, setMarkets] = useState<UIMarket[]>([]);
   const [bets, setBets] = useState<UIBet[]>([]);
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("open");
   const [status, setStatus] = useState<{ type: string; msg: string; txHash?: string } | null>(null);
 
   const [question, setQuestion] = useState("");
@@ -354,7 +355,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-end">
             {connected ? (
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowPortfolio(true)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:text-white font-mono transition-colors">Portfolio</button>
+                <div className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-mono text-white/70">
+                  <span className="text-white/40">◎</span> {balance !== null ? (balance / 1e9).toFixed(2) : "..."} SOL
+                </div>
+                <button onClick={() => setShowPortfolio(true)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:text-white font-mono transition-colors">{publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}</button>
                 <button onClick={disconnect} className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/60 hover:text-red-300 font-mono transition-colors">Disconnect</button>
               </div>
             ) : (
@@ -425,6 +429,27 @@ export default function Dashboard() {
           </motion.div>
         )}
 
+        {/* Wallet Card */}
+        {connected && (
+          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-mono text-xs text-white/30 mb-1">{wallet?.adapter?.name || "Wallet"}</p>
+                <p className="font-mono font-semibold text-white">{publicKey?.toBase58().slice(0, 8)}...{publicKey?.toBase58().slice(-6)}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-xs text-white/30 mb-1">Balance</p>
+                <p className="font-mono font-semibold text-green-300">◎ {balance !== null ? (balance / 1e9).toFixed(3) : "..."} SOL</p>
+              </div>
+            </div>
+            {(balance !== null && balance < 0.5 * 1e9) && (
+              <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                <p className="text-xs font-mono text-yellow-300/70 text-center">Low balance — use <Link to="/faucet" className="underline text-yellow-300">Faucet</Link> to get test SOL</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Custom Market */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
@@ -443,6 +468,23 @@ export default function Dashboard() {
           </motion.div>
         )}
 
+        {/* Filters */}
+        <div className="flex items-center gap-2 mb-4">
+          {["all", "open", "settled"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`font-mono text-xs font-semibold uppercase px-4 py-1.5 rounded-full transition-all ${
+                filter === f
+                  ? "bg-red-500 text-black"
+                  : "bg-white/[0.05] text-white/40 hover:text-white"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
         {/* Markets */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">Markets <span className="text-white/30 text-lg">({markets.filter(m => m.status !== "cancelled").length})</span></h2>
@@ -458,7 +500,11 @@ export default function Dashboard() {
           <div className="text-center py-20"><p className="text-white/40 font-mono text-sm">No markets yet — create one above</p></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {markets.filter(m => m.status !== "cancelled").map((m, idx) => {
+            {markets.filter(m => {
+              if (m.status === "cancelled") return false;
+              if (filter === "all") return true;
+              return m.status === filter;
+            }).map((m, idx) => {
               const st = statusLabel(m.status);
               const myBet = myBetOnMarket(m.pubkey.toString());
               const yesPct = m.totalPool > 0 ? (m.poolYes * 100 / m.totalPool).toFixed(1) : "50";

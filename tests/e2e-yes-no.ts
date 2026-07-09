@@ -27,7 +27,7 @@ describe("FullTime E2E — YES/NO Market Flow", () => {
   it("E2E: create → open → bet YES → close → resolve YES → claim", async () => {
     const fixtureId = fid();
     const mpda = marketPda(fixtureId);
-    const question = "Will Argentina win the 2026 World Cup?";
+    const question = "Portugal vs Spain — Who wins?";
     const SOL = LAMPORTS_PER_SOL;
 
     // 1. CREATE (manual market, isTrustless=false)
@@ -118,7 +118,7 @@ describe("FullTime E2E — YES/NO Market Flow", () => {
 
     // Create + open
     await program.methods
-      .createMarket(new anchor.BN(fixtureId), "Will Brazil win?", ts(2), ts(12), false)
+      .createMarket(new anchor.BN(fixtureId), "Argentina vs Brazil — Who wins?", ts(2), ts(12), false)
       .accounts({ creator: creator.publicKey }).signers([creator]).rpc({ commitment: "confirmed" });
     await sleep(3500);
     await program.methods.openMarket().accounts({ market: mpda }).rpc({ commitment: "confirmed" });

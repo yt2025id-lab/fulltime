@@ -10,26 +10,12 @@ import * as path from "path";
 const RPC_URL = "http://localhost:8899";
 
 const MARKET_DEFS = [
-  { q: "Argentina vs Brazil — Who wins?", outcome: true, betYes: 0.05, betNo: 0.03 },
-  { q: "England vs France — Who wins?", outcome: true, betYes: 0.04, betNo: 0.02 },
-  { q: "Germany vs Spain — Who wins?", outcome: false, betYes: 0.03, betNo: 0.04 },
-  { q: "Netherlands vs Portugal — Who wins?", outcome: true, betYes: 0.02, betNo: 0.01 },
+  { q: "France vs Morocco — Who wins QF?", outcome: true, betYes: 0.05, betNo: 0.03 },
+  { q: "Spain vs Belgium — Who wins QF?", outcome: true, betYes: 0.04, betNo: 0.02 },
+  { q: "Norway vs England — Who wins QF?", outcome: false, betYes: 0.03, betNo: 0.04 },
+  { q: "Argentina vs Switzerland — Who wins QF?", outcome: true, betYes: 0.02, betNo: 0.01 },
   { q: "Who will win World Cup 2026?", outcome: true, betYes: 0.10, betNo: 0.05 },
-  { q: "Will Haaland be top scorer?", outcome: true, betYes: 0.02, betNo: 0.03 },
-  { q: "Will Messi win MVP?", outcome: false, betYes: 0.01, betNo: 0.05 },
-  { q: "Will Brazil reach semi-final?", outcome: true, betYes: 0.03, betNo: 0.02 },
-  { q: "Will there be extra time in final?", outcome: false, betYes: 0.02, betNo: 0.04 },
-  { q: "Will Argentina defend the title?", outcome: true, betYes: 0.04, betNo: 0.02 },
-  { q: "Belgium vs Morocco — Who wins?", outcome: false, betYes: 0.03, betNo: 0.03 },
-  { q: "USA vs Mexico — Who wins?", outcome: true, betYes: 0.02, betNo: 0.01 },
-  { q: "Will Mbappe be top scorer?", outcome: false, betYes: 0.02, betNo: 0.04 },
-  { q: "Will Japan reach knockout?", outcome: false, betYes: 0.01, betNo: 0.03 },
-  { q: "Will Nigeria reach QF?", outcome: true, betYes: 0.02, betNo: 0.02 },
-  { q: "Will there be a hat-trick?", outcome: true, betYes: 0.03, betNo: 0.01 },
-  { q: "Will golden glove be European?", outcome: true, betYes: 0.02, betNo: 0.03 },
-  { q: "Will host nation win group?", outcome: false, betYes: 0.02, betNo: 0.04 },
-  { q: "Will Ronaldo play in WC?", outcome: true, betYes: 0.03, betNo: 0.01 },
-  { q: "Total goals exceed 170?", outcome: true, betYes: 0.02, betNo: 0.03 },
+  { q: "Brazil vs Norway — Who wins?", outcome: true, betYes: 0.03, betNo: 0.01 },
 ];
 
 describe("FullTime — 20 E2E Markets", () => {

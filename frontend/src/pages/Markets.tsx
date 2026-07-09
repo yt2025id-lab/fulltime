@@ -10,10 +10,10 @@ interface MarketData {
   creator: string;
   totalPool: number;
   status: string;
-  poolHome: number;
-  poolDraw: number;
-  poolAway: number;
+  poolYes: number;
+  poolNo: number;
   bettingCloseTime: number;
+  isTrustless: boolean;
 }
 
 const STATUS_MAP: Record<string, string> = {
@@ -34,7 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Markets() {
   const [markets, setMarkets] = useState<MarketData[]>([]);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("open");
   const [loading, setLoading] = useState(true);
   const program = useProgram();
 
@@ -54,13 +54,17 @@ export default function Markets() {
         creator: m.account.creator.toBase58(),
         totalPool: m.account.totalPool.toNumber() / 1e9,
         status: Object.keys(m.account.status)[0],
-        poolHome: m.account.poolHome.toNumber() / 1e9,
-        poolDraw: m.account.poolDraw.toNumber() / 1e9,
-        poolAway: m.account.poolAway.toNumber() / 1e9,
+        poolYes: m.account.poolYes.toNumber() / 1e9,
+        poolNo: m.account.poolNo.toNumber() / 1e9,
         bettingCloseTime: m.account.bettingCloseTime.toNumber(),
+        isTrustless: m.account.isTrustless,
       }));
 
-      setMarkets(data.sort((a, b) => b.bettingCloseTime - a.bettingCloseTime));
+      setMarkets(data.sort((a, b) => {
+        const priority = (s: string) => s === "open" ? 0 : 1;
+        const p = priority(a.status) - priority(b.status);
+        return p !== 0 ? p : b.bettingCloseTime - a.bettingCloseTime;
+      }));
     } catch (err) {
       console.error("Failed to load markets:", err);
     } finally {
@@ -80,7 +84,7 @@ export default function Markets() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-black">MARKETS</h1>
           <div className="flex gap-2">
-            {["all", "open", "closed", "settled", "cancelled"].map((f) => (
+            {["all", "open", "settled"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -135,13 +139,10 @@ export default function Markets() {
                 </div>
                 <div className="flex gap-4 mt-2 text-xs text-gray-500">
                   <span>
-                    H: {m.poolHome.toFixed(2)}
+                    YES: {m.poolYes.toFixed(2)}
                   </span>
                   <span>
-                    D: {m.poolDraw.toFixed(2)}
-                  </span>
-                  <span>
-                    A: {m.poolAway.toFixed(2)}
+                    NO: {m.poolNo.toFixed(2)}
                   </span>
                 </div>
               </Link>

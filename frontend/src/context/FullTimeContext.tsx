@@ -53,7 +53,7 @@ function AnchorProgramProvider({ children }: { children: ReactNode }) {
 
 // ─── Top-level Provider ──────────────────────────────────────────
 export function AppProviders({ children }: { children: ReactNode }) {
-  const endpoint = clusterApiUrl("devnet");
+  const endpoint = import.meta.env.VITE_RPC_URL || clusterApiUrl("devnet");
   const wallets = useMemo(() => [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter(),

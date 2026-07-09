@@ -25,9 +25,8 @@ export default function AuditTrail() {
           settlementTs: m.settlementTs.toNumber(),
           disputeUntil: m.disputeUntil.toNumber(),
           totalPool: m.totalPool.toNumber() / 1e9,
-          poolHome: m.poolHome.toNumber() / 1e9,
-          poolDraw: m.poolDraw.toNumber() / 1e9,
-          poolAway: m.poolAway.toNumber() / 1e9,
+          poolYes: m.poolYes.toNumber() / 1e9,
+          poolNo: m.poolNo.toNumber() / 1e9,
         });
       } catch {}
       setLoading(false);

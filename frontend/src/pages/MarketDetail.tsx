@@ -12,9 +12,8 @@ interface MarketView {
   question: string;
   creator: string;
   totalPool: number;
-  poolHome: number;
-  poolDraw: number;
-  poolAway: number;
+  poolYes: number;
+  poolNo: number;
   status: string;
   winningOption: number;
   settlementTs: number;
@@ -22,6 +21,7 @@ interface MarketView {
   bettingOpenTime: number;
   bettingCloseTime: number;
   feeBps: number;
+  isTrustless: boolean;
 }
 
 const STATUS_MAP: Record<string, string> = {
@@ -56,9 +56,8 @@ export default function MarketDetail() {
         question: m.question,
         creator: m.creator.toBase58(),
         totalPool: m.totalPool.toNumber() / LAMPORTS_PER_SOL,
-        poolHome: m.poolHome.toNumber() / LAMPORTS_PER_SOL,
-        poolDraw: m.poolDraw.toNumber() / LAMPORTS_PER_SOL,
-        poolAway: m.poolAway.toNumber() / LAMPORTS_PER_SOL,
+        poolYes: m.poolYes.toNumber() / LAMPORTS_PER_SOL,
+        poolNo: m.poolNo.toNumber() / LAMPORTS_PER_SOL,
         status: Object.keys(m.status)[0],
         winningOption: m.winningOption,
         settlementTs: m.settlementTs.toNumber(),
@@ -66,6 +65,7 @@ export default function MarketDetail() {
         bettingOpenTime: m.bettingOpenTime.toNumber(),
         bettingCloseTime: m.bettingCloseTime.toNumber(),
         feeBps: m.feeBps,
+        isTrustless: m.isTrustless,
       });
     } catch (err) {
       console.error(err);
@@ -131,8 +131,8 @@ export default function MarketDetail() {
       </div>
     );
 
-  const options = ["HOME", "DRAW", "AWAY"];
-  const pools = [market.poolHome, market.poolDraw, market.poolAway];
+  const options = ["YES", "NO"];
+  const pools = [market.poolYes, market.poolNo];
   const maxPool = Math.max(...pools, 0.001);
 
   return (
