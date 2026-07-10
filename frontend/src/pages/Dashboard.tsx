@@ -176,7 +176,7 @@ export default function Dashboard() {
         off += 1; // winning_option
         const isTrustless = readU8(off) === 1;
 
-        const statusMap = ["created", "open", "closed", "settled", "cancelled", "disputed"];
+        const statusMap = ["pending", "open", "closed", "settled", "cancelled"];
         return {
           pubkey: r.pubkey,
           fixtureId,
@@ -523,7 +523,7 @@ export default function Dashboard() {
 
         {/* Filters */}
         <div className="flex items-center gap-2 mb-4">
-          {["all", "open", "settled"].map((f) => (
+          {["all", "pending", "open", "closed", "settled"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -561,6 +561,7 @@ export default function Dashboard() {
             {markets.filter(m => {
               if (m.status === "cancelled") return false;
               if (filter === "all") return true;
+              if (filter === "open") return m.status === "open";
               return m.status === filter;
             }).filter(m => {
               if (!m.isTrustless && m.status === "settled") return false;
