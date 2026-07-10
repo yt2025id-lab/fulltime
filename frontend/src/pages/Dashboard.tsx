@@ -648,7 +648,7 @@ export default function Dashboard() {
                           </svg>
                         </div>
                         <div>
-                          <p className="font-semibold text-neutral-200 text-sm">{fixture ? `${flagEmoji(home)} ${fixture.Participant1} vs ${fixture.Participant2} ${flagEmoji(away)}` : 'Custom Market'}</p>
+                          <p className="font-semibold text-neutral-200 text-sm">{fixture ? `${flagEmoji(home!)} ${fixture.Participant1} vs ${fixture.Participant2} ${flagEmoji(away!)}` : 'Custom Market'}</p>
                           <p className="text-[10px] text-neutral-500 font-mono">#{m.fixtureId || idx + 1}{m.isTrustless && ' · Trustless'}{!m.isTrustless && ' · Manual'}</p>
                         </div>
                       </div>
