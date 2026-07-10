@@ -103,7 +103,7 @@ export default function Dashboard() {
   const [fixtures, setFixtures] = useState<TxLineFixture[]>([]);
 
   function showMarket(fixtureId: number): boolean {
-    return [18218149, 18213979, 18222446].includes(fixtureId);
+    return fixtureId === 0 || [18218149, 18213979, 18222446].includes(fixtureId);
   }
   const [showFixtures, setShowFixtures] = useState(true);
   const [fixtureQType, setFixtureQType] = useState<Record<number, "win" | "draw">>({});
