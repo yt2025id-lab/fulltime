@@ -210,7 +210,7 @@ export default function Dashboard() {
             encoding: "base64",
             filters: [
               { memcmp: { offset: 0, bytes: betDiscB58 } },
-              { memcmp: { offset: 8, bytes: publicKey.toBase58() } },
+              { memcmp: { offset: 40, bytes: publicKey.toBase58() } },
             ],
           }],
         }),
