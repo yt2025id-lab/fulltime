@@ -423,7 +423,7 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-green-950/75 backdrop-blur-[2px]" />
       </div>
 
-      <nav className="sticky top-0 z-40 border-b border-red-800/30 bg-[#c0392b]/95 backdrop-blur-lg">
+      <nav className="sticky top-0 z-40 border-b border-white/5 bg-neutral-950/95 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
           <div className="flex items-center gap-4">
             <Link to="/" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
@@ -446,7 +446,7 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <div className="relative z-10 border-b border-red-800/20 bg-[#c0392b]/60 backdrop-blur-sm">
+      <div className="relative z-10 border-b border-white/5 bg-neutral-900/60 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-center gap-4 text-xs font-mono text-white/50">
           <span>{now.toLocaleDateString("en-US", { weekday: "long" })}</span>
           <span className="text-white/20">|</span>
