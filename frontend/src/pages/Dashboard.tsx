@@ -418,9 +418,9 @@ export default function Dashboard() {
   const dt = (ts: number) => new Date(ts * 1000).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="min-h-screen bg-neutral-950 relative">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-900 via-neutral-950 to-zinc-950 relative">
 
-      <nav className="sticky top-0 z-40 border-b border-white/5 bg-neutral-950/95 backdrop-blur-lg">
+      <nav className="sticky top-0 z-40 border-b border-amber-500/10 bg-neutral-950/95 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
           <div className="flex items-center gap-4">
             <Link to="/" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
@@ -443,7 +443,7 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <div className="relative z-10 border-b border-white/5 bg-neutral-900/60 backdrop-blur-sm">
+      <div className="relative z-10 border-b border-amber-500/5 bg-neutral-800/40 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-center gap-4 text-xs font-mono text-white/50">
           <span>{now.toLocaleDateString("en-US", { weekday: "long" })}</span>
           <span className="text-white/20">|</span>
@@ -457,7 +457,7 @@ export default function Dashboard() {
         <motion.div {...fadeIn} transition={{ duration: 0.8, ease: "easeOut" }} className="text-center mb-10">
           <p className="text-sm font-mono text-neutral-500 mb-4">// dashboard</p>
           <h1 className="font-heading text-white text-5xl md:text-6xl lg:text-[5rem] leading-[0.9] tracking-[-3px]">
-            World Cup<br /><span className="text-red-300 italic">Prediction</span>
+            World Cup<br /><span className="bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 text-transparent bg-clip-text italic">Prediction</span>
           </h1>
           <p className="text-sm text-neutral-400 font-mono mt-4 max-w-md mx-auto leading-relaxed">
             Trustless prediction markets powered by TxLINE and Solana.
@@ -465,7 +465,7 @@ export default function Dashboard() {
           <p className="text-xs text-white/20 font-mono mt-2">{markets.filter(m => m.status !== "cancelled" && showMarket(m.fixtureId)).length} markets</p>
           {!connected && (
             <div className="mt-6">
-              <WalletModalButton style={{ background: "#ef4444", color: "#fff", borderRadius: "9999px", padding: "12px 32px", fontSize: "14px", fontFamily: "ui-monospace, monospace", fontWeight: 600, border: "none", cursor: "pointer" }} />
+              <WalletModalButton style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", borderRadius: "9999px", padding: "12px 32px", fontSize: "14px", fontFamily: "ui-monospace, monospace", fontWeight: 700, border: "none", cursor: "pointer" }} />
             </div>
           )}
         </motion.div>
@@ -489,8 +489,8 @@ export default function Dashboard() {
                   const existing = markets.filter(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
                   const hasExisting = existing.length > 0;
                   return (
-                    <div key={f.FixtureId} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
-                      <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+                    <div key={f.FixtureId} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
+                      <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
                       <div className="relative flex flex-col gap-4">
                         <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
                           <div>
@@ -519,7 +519,7 @@ export default function Dashboard() {
                         <button
                           onClick={() => createFixtureMarket(f, qt)}
                           disabled={creating}
-                          className="rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30"
+                          className="rounded-lg border border-amber-500/40 bg-transparent px-4 py-2 text-xs font-medium text-amber-400 transition-colors duration-300 hover:bg-amber-400 hover:text-black disabled:opacity-30"
                         >Create & Bet</button>
                       </div>
                     </div>
@@ -533,8 +533,8 @@ export default function Dashboard() {
         {/* Wallet Card */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8">
-            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
-              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
+              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
               <div className="relative flex flex-col gap-4">
                 <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
                   <div>
@@ -559,8 +559,8 @@ export default function Dashboard() {
         {/* Custom Market */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8">
-            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
-              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
+              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
               <div className="relative flex flex-col gap-4">
                 <div className="border-b border-neutral-800 pb-4">
                   <p className="font-semibold text-neutral-200 text-sm">Custom Market</p>
@@ -573,7 +573,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-4">
                   <p className="text-[10px] font-mono text-neutral-500">Fee: <span className="text-neutral-300 font-medium">2%</span></p>
                 </div>
-                <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30">{creating ? "Creating..." : "Create Market"}</button>
+                <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full rounded-lg border border-amber-500/40 bg-transparent px-4 py-2 text-xs font-medium text-amber-400 transition-colors duration-300 hover:bg-amber-400 hover:text-black disabled:opacity-30">{creating ? "Creating..." : "Create Market"}</button>
               </div>
             </div>
           </motion.div>
@@ -587,8 +587,8 @@ export default function Dashboard() {
               onClick={() => setFilter(f)}
               className={`font-mono text-xs font-semibold uppercase px-4 py-1.5 rounded-full transition-all ${
                 filter === f
-                  ? "bg-neutral-800 text-white"
-                  : "bg-white/[0.05] text-white/40 hover:text-white"
+                  ? "bg-amber-500/20 border border-amber-500/30 text-amber-300"
+                  : "bg-white/[0.05] text-white/40 hover:text-white border border-transparent"
               }`}
             >
               {f}
@@ -641,8 +641,8 @@ export default function Dashboard() {
               const away = fixture ? (fixture.Participant1IsHome ? fixture.Participant2 : fixture.Participant1) : null;
 
               return (
-                <div key={m.pubkey.toString()} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
-                  <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+                <div key={m.pubkey.toString()} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
+                  <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
                   <div className="relative flex flex-col gap-4">
                     {/* Header */}
                     <div className="flex items-start justify-between border-b border-neutral-800 pb-4">
@@ -717,7 +717,7 @@ export default function Dashboard() {
                               <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 1 ? '✓ BET NO' : 'NO'}</button>
                             </div>
                           ) : (
-                            <button onClick={() => setBetMarket(m.pubkey.toString())} className={`flex-1 rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:cursor-default ${myBet ? 'border-amber-500/40 text-amber-400/70' : 'border-red-400/50 text-red-400 hover:bg-red-400 hover:text-neutral-950'}`}>{myBet ? '✓ Bet Active' : 'Place Bet'}</button>
+                            <button onClick={() => setBetMarket(m.pubkey.toString())} className={`flex-1 rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:cursor-default ${myBet ? 'border-amber-500/40 text-amber-400/70' : 'border-amber-500/40 text-amber-400 hover:bg-amber-400 hover:text-black'}`}>{myBet ? '✓ Bet Active' : 'Place Bet'}</button>
                           )}
                         </>
                       )}
@@ -729,7 +729,7 @@ export default function Dashboard() {
                           <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-red-500/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30">Resolve NO</button>
                         </>
                       )}
-                      {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-neutral-500 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 hover:border-red-400">🗑</button>}
+                      {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-neutral-500 transition-colors duration-300 hover:bg-amber-400 hover:text-black hover:border-amber-400">🗑</button>}
                     </div>
                   </div>
                 </div>
