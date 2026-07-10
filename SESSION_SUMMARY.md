@@ -2,7 +2,7 @@
 **Author:** Achmad Fauzan Ashari (Ozan_OnChain)
 **Hackathon:** TxODDS x Solana x Superteam Earn — World Cup 2026
 **Track:** Prediction Markets & Settlement ($18,000)
-**Date:** 4 Juli 2026 (Updated: 7 Juli 2026 — v2.2: Live football-data.org, Portfolio, faucet, FAQ overhaul)
+**Date:** 4 Juli 2026 (Updated: 10 Juli 2026 — v2.3: Dual-language EN/ID, live football data, UI polish, footer all pages)
 **Deadline:** 19 Juli 2026 | **Pengumuman:** 29 Juli 2026
 
 ---
@@ -254,6 +254,47 @@ fulltime/
 5. **Refund mechanism** — `refund_bet` for cancelled markets (auto-closes bet account, returns SOL)
 6. **Championship landing page** — 6 marquee sections with 40+ World Cup country flags, comparison table, 5-step flow
 7. **Neo-brutalism UI** — distinct visual identity, memorable for judges, consistent across all pages
+
+---
+
+## ⭐ v2.3 — Dual Language + UI Polish + Live Data (10 Juli 2026)
+
+### Dual Language EN/ID (All Pages)
+- **i18n Context**: `frontend/src/lib/i18n/context.tsx` — React Context with `useLang()` hook, localStorage persistence, auto-detects `navigator.language`
+- **Translation files**: `en.ts` + `id.ts` (~130 translation keys each)
+- **LangToggle component**: `frontend/src/components/LangToggle.tsx` — EN/ID button in all navbars + Landing hero top-right
+- **Coverage**: Nav links, Dashboard (filters, buttons, labels, YES/NO, Place Bet, Claim, Refund, deadlines), Matches (tabs, table headers, loading), FAQ (all 12 Q&A fully translated), Faucet (all text, steps, error messages), Landing (hero, how it works, features, footer)
+- **Footer translations**: All 5 pages (Dashboard, Matches, FAQ, Faucet, Landing) — `footer.text` + `footer.sub`
+
+### Football Data Live Integration
+- **API Key**: football-data.org key configured via `VITE_FOOTBALL_API_KEY` in Vercel env
+- **Vercel Proxy**: `api/football-proxy.ts` — serverless function proxies `/api/football/*` → `api.football-data.org/v4` with `X-Auth-Token`
+- **Rewrite**: `vercel.json` rule: `/api/football/(.*)` → `/api/football-proxy?path=$1`
+- Matches page scorers/standings/knockout now show **live WC2026 data** (Mbappé 8⚽, Messi 8⚽, Haaland 7⚽)
+- Falls back to demo data only when API key is missing
+
+### UI Polish
+- **Header**: Removed `← Back` from all page navbars, replaced with `⚽ FullTime` logo as clickable home link (top-left)
+- **Marquee (Landing)**: Changed from amber/yellow (`bg-amber-400/90`) to emerald green (`bg-emerald-950/80`) with amber border (`border-amber-500/20`)
+- **Launch dApp Button**: Changed from orange (`#c0392b`) to turmeric yellow (`#f59e0b` amber-500 with hover gradients `#d97706`→`#b45309`)
+- **Footer**: Added simple footer (`border-t border-amber-500/10`) to Dashboard, Matches, FAQ, Faucet pages (Landing already had one)
+
+### Hackathon Rating (Self-Assessment)
+- **Current score: 85/100** — potential Top 3-5 among 36 submissions
+- **Strengths**: CPI Merkle proof settlement, dual language, live data, universal prediction types, audit trail
+- **Remaining**: Video demo, manual CPI trigger button, official submission to Superteam Earn
+
+### Remaining for Submission
+1. 🔴 Record 90-120 detik video demo (create→bet→settle→claim, on-chain audit trail)
+2. 🔴 Add "Settle via CPI" manual trigger button (prove trustless E2E even when SSE unavailable)
+3. 🔴 Submit to superteam.fun/earn/listing/prediction-markets-and-settlement/
+4. 🟡 Frame dual-track architecture (Trustless CPI + Manual resolve) as competitive advantage
+5. 🟡 Consider hiding `resolve_market` from UI for trustless markets
+
+### Key Architecture Insight: Dual-Track Settlement
+- **Trustless (isTrustless=true)**: CPI `settle_market` → Merkle proof on-chain → objective outcomes (match results)
+- **Manual (isTrustless=false)**: `resolve_market(outcome)` → Creator resolution → subjective predictions (MVP, Best GK)
+- **Competitive advantage**: Polymarket only does dispute-based match outcomes. FullTime = cryptographic settlement + unlimited prediction scope
 
 ---
 

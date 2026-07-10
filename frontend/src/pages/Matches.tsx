@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletModalButton, WalletDisconnectButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
 import { fetchFixtures, fetchScores, getPhaseName, type TxLineFixture, type TxLineScore } from "../lib/txline";
 import { fetchScorers, fetchStandings, fetchKnockout, hasApiKey, type FDScorer, type FDStanding, type FDKnockoutMatch } from "../lib/football-data";
+import { useLang } from "../lib/i18n/context";
+import LangToggle from "../components/LangToggle";
 
 interface Match {
   id: number; home: string; away: string; homeFlag: string; awayFlag: string;
@@ -86,6 +90,8 @@ const KNOCKOUT = [
 ];
 
 export default function Matches() {
+  const { t, lang } = useLang();
+  const { connected, publicKey } = useWallet();
   const [detailTab, setDetailTab] = useState<DetailTab>("matches");
   const [mainTab, setMainTab] = useState<MainTab>("matches");
   const [matches, setMatches] = useState<Match[]>([]);
@@ -167,25 +173,29 @@ export default function Matches() {
   const filtered = matches.filter(m => mainTab === "matches" ? true : m.status === mainTab);
 
   return (
-    <div className="min-h-screen bg-black relative">
-      <div className="fixed inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url(https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1920&q=80)" }}>
-        <div className="absolute inset-0 bg-black/85 backdrop-blur-[2px]" />
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-emerald-950 via-zinc-900 to-zinc-950 relative">
+      <div className="fixed inset-0 z-0 bg-cover bg-center opacity-[0.04]" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1920&q=80)` }} />
 
       <nav className="sticky top-0 z-40 border-b border-emerald-500/20 bg-zinc-900/90 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
-          <div className="flex items-center gap-4">
-            <Link to="/app" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
-            <span className="text-lg">⚽</span>
-            <span className="font-mono font-bold text-white text-lg">Full<span className="text-white/40">Time</span></span>
-          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-xl">⚽</span>
+            <span className="font-mono font-bold text-white text-lg tracking-tight">Full<span className="text-white/40">Time</span></span>
+          </Link>
           <div className="flex items-center justify-center gap-2">
-            <Link to="/app" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">Markets</Link>
-            <Link to="/matches" className="bg-white/15 rounded-full px-4 py-1.5 text-sm font-mono text-white font-medium">Matches</Link>
+            <Link to="/app" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">{t("nav.markets")}</Link>
+            <Link to="/matches" className="bg-white/15 rounded-full px-4 py-1.5 text-sm font-mono text-white font-medium">{t("nav.matches")}</Link>
             <Link to="/faq" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">FAQ</Link>
-            <Link to="/faucet" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">Faucet</Link>
+            <Link to="/faucet" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">{t("nav.faucet")}</Link>
           </div>
-          <div />
+          <div className="flex items-center justify-end gap-2">
+            <LangToggle />
+            {connected ? (
+              <WalletDisconnectButton style={{ background: "#262626", color: "#fff", borderRadius: "9999px", padding: "6px 16px", fontSize: "12px", fontFamily: "ui-monospace,monospace", border: "none" }} />
+            ) : (
+              <WalletModalButton style={{ background: "#171717", color: "#fff", borderRadius: "9999px", padding: "8px 20px", fontSize: "14px", fontFamily: "ui-monospace,monospace", fontWeight: 600, border: "1px solid rgba(255,255,255,0.2)" }} />
+            )}
+          </div>
         </div>
       </nav>
 
@@ -195,7 +205,7 @@ export default function Matches() {
             <h1 className="font-mono font-bold text-white text-5xl md:text-6xl tracking-[-2px]">
               World Cup <span className="text-amber-400/60">2026</span>
             </h1>
-            <p className="font-mono text-xs text-white/40 mt-1">Live data via TxLINE — Hackathon Sponsor</p>
+            <p className="font-mono text-xs text-white/40 mt-1">{lang === "id" ? "Data langsung via TxLINE — Sponsor Hackathon" : "Live data via TxLINE — Hackathon Sponsor"}</p>
           </div>
           {lastUpdate && (
             <div className="text-right">
@@ -207,10 +217,10 @@ export default function Matches() {
 
         {/* Detail Tabs */}
         <div className="flex gap-3 mb-6">
-          {([{ k: "matches" as DetailTab, l: "Matches" }, { k: "scorers" as DetailTab, l: "Top Scorers" }, { k: "standings" as DetailTab, l: "Standings" }, { k: "knockout" as DetailTab, l: "Knockout" }]).map(t => (
-            <button key={t.k} onClick={() => { setDetailTab(t.k); if (t.k !== "matches") setMainTab("matches"); }}
-              className={`rounded-full px-5 py-2.5 text-sm font-mono transition-all ${detailTab === t.k ? "bg-[#c0392b] text-white font-semibold" : "bg-white/[0.04] text-white/50 hover:text-white border border-white/[0.06]"}`}>
-              {t.l}
+          {([{ k: "matches" as DetailTab, l: t("nav.matches") }, { k: "scorers" as DetailTab, l: t("match.scorers") }, { k: "standings" as DetailTab, l: t("match.standings") }, { k: "knockout" as DetailTab, l: t("match.knockout") }]).map(tab => (
+            <button key={tab.k} onClick={() => { setDetailTab(tab.k); if (tab.k !== "matches") setMainTab("matches"); }}
+              className={`rounded-full px-5 py-2.5 text-sm font-mono transition-all ${detailTab === tab.k ? "bg-emerald-600 text-white font-semibold" : "bg-white/[0.04] text-white/50 hover:text-white border border-white/[0.06]"}`}>
+              {tab.l}
             </button>
           ))}
         </div>
@@ -219,7 +229,7 @@ export default function Matches() {
           <>
             {/* Match Tabs */}
             <div className="flex gap-3 mb-6">
-              {([{ k: "matches" as MainTab, l: "All" }, { k: "live" as MainTab, l: "Live" }, { k: "upcoming" as MainTab, l: "Upcoming" }, { k: "finished" as MainTab, l: "Results" }]).map(t => (
+              {([{ k: "matches" as MainTab, l: lang === "id" ? "Semua" : "All" }, { k: "live" as MainTab, l: lang === "id" ? "Live" : "Live" }, { k: "upcoming" as MainTab, l: lang === "id" ? "Mendatang" : "Upcoming" }, { k: "finished" as MainTab, l: lang === "id" ? "Hasil" : "Results" }]).map(t => (
                 <button key={t.k} onClick={() => setMainTab(t.k)} className={`rounded-full px-4 py-2 text-xs font-mono transition-all ${mainTab === t.k ? "bg-white/10 text-white font-semibold border border-white/10" : "text-white/40 hover:text-white"}`}>
                   {t.l} {t.k !== "matches" && <span className="opacity-50">({matches.filter(m => m.status === t.k).length})</span>}
                 </button>
@@ -228,22 +238,24 @@ export default function Matches() {
 
             {loading && (
               <div className="flex items-center justify-center py-20 gap-3">
-                <div className="animate-spin w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full" />
-                <span className="text-white/30 font-mono text-sm">Loading from TxLINE...</span>
+                <div className="animate-spin w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full" />
+                <span className="text-white/30 font-mono text-sm">{lang === "id" ? "Memuat dari TxLINE..." : "Loading from TxLINE..."}</span>
               </div>
             )}
 
-            {error && <div className="mb-6 bg-red-500/5 border border-red-500/10 rounded-2xl p-4"><p className="text-red-400/60 font-mono text-xs">{error}</p></div>}
+            {error && <div className="mb-6 bg-amber-500/5 border border-amber-500/10 rounded-2xl p-4"><p className="text-amber-400/60 font-mono text-xs">{error}</p></div>}
 
             {!loading && filtered.length === 0 && (
-              <div className="text-center py-20"><p className="text-white/30 font-mono text-sm">No matches available</p></div>
+              <div className="text-center py-20"><p className="text-white/30 font-mono text-sm">{lang === "id" ? "Tidak ada pertandingan" : "No matches available"}</p></div>
             )}
 
             {!loading && (
               <div className="space-y-3">
                 {filtered.map(m => (
-                  <div key={m.id} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-5 flex items-center gap-4 hover:border-white/10 transition-colors">
-                    <div className="shrink-0 w-20 text-center">
+                  <div key={m.id} className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20 hover:border-emerald-500/20 transition-colors">
+                    <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20" />
+                    <div className="relative z-10 flex items-center gap-4">
+                      <div className="shrink-0 w-20 text-center">
                       <span className="font-mono text-xs text-white/30">#{m.id}</span>
                       <div className={`mt-1 text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded-full ${m.status === "live" ? "bg-red-500/20 text-red-400 animate-pulse" : m.status === "finished" ? "bg-white/10 text-white/40" : "bg-white/5 text-white/30"}`}>
                         {m.status === "live" ? "LIVE" : m.status}
@@ -262,6 +274,7 @@ export default function Matches() {
                         {m.phase && <div className="font-mono text-[10px] text-white/20 mt-0.5">{m.phase}</div>}
                       </div>
                     </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -272,11 +285,14 @@ export default function Matches() {
         {detailTab === "scorers" && (
           <div className="space-y-2">
             {scorers.map((s, i) => (
-              <div key={s.player} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 flex items-center gap-4">
-                <span className={`font-mono text-lg w-8 shrink-0 ${i === 0 ? "text-red-400 font-bold" : i < 3 ? "text-amber-400/60" : "text-white/30"}`}>{i + 1}</span>
+              <div key={s.player} className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-4 font-sans shadow-2xl border border-zinc-600/20">
+                <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20" />
+                <div className="relative z-10 flex items-center gap-4">
+                <span className={`font-mono text-lg w-8 shrink-0 ${i === 0 ? "text-amber-400 font-bold" : i < 3 ? "text-amber-400/60" : "text-white/30"}`}>{i + 1}</span>
                 <span className="text-lg shrink-0">{s.flag}</span>
                 <div className="flex-1"><span className="font-mono font-semibold text-white text-sm">{s.player}</span><span className="ml-2 font-mono text-xs text-white/30">{s.team}</span></div>
-                <div className="text-right shrink-0"><span className="font-mono text-lg text-red-400 font-bold">{s.goals}</span><div className="text-[10px] text-white/25 font-mono">{s.assists} assists · {s.matches} MP</div></div>
+                <div className="text-right shrink-0"><span className="font-mono text-lg text-amber-400 font-bold">{s.goals}</span><div className="text-[10px] text-white/25 font-mono">{s.assists} assists · {s.matches} MP</div></div>
+              </div>
               </div>
             ))}
             <p className="text-center font-mono text-[10px] text-white/15 mt-2">{usingLiveData ? "Live data via football-data.org" : "Demo data — set VITE_FOOTBALL_API_KEY for live updates"}</p>
@@ -292,12 +308,14 @@ export default function Matches() {
                 return Object.entries(grouped).map(([group, teams]) => (
                   <div key={group}>
                     <h3 className="font-mono text-sm text-amber-400/60 mb-3">{group}</h3>
-                    <div className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl overflow-hidden">
+                    <div className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20">
+                      <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20" />
+                      <div className="relative z-10">
                       <table className="w-full text-left">
-                        <thead><tr className="text-white/25 text-[10px] border-b border-white/[0.04]">{["#","Team","P","W","D","L","GF","GA","Pts"].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
+                        <thead><tr className="text-white/25 text-[10px] border-b border-zinc-600/10">{[lang==="id"?"#":"#",lang==="id"?"Tim":"Team",t("match.p"),t("match.w"),t("match.d"),t("match.l"),t("match.gf"),t("match.ga"),t("match.pts")].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
                         <tbody>
                           {teams.sort((a,b) => a.pos-b.pos).map(s => (
-                            <tr key={s.team} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                            <tr key={s.team} className="border-b border-zinc-600/10 hover:bg-zinc-800/30">
                               <td className="p-2 font-mono text-xs text-white/40">{s.pos}</td>
                               <td className="p-2 font-mono text-xs text-white font-medium">{s.flag} {s.team}</td>
                               <td className="p-2 font-mono text-xs text-white/40">{s.p}</td>
@@ -306,24 +324,27 @@ export default function Matches() {
                               <td className="p-2 font-mono text-xs text-white/40">{s.l}</td>
                               <td className="p-2 font-mono text-xs text-white/40">{s.gf}</td>
                               <td className="p-2 font-mono text-xs text-white/40">{s.ga}</td>
-                              <td className="p-2 font-mono text-xs text-red-400 font-bold">{s.pts}</td>
+                              <td className="p-2 font-mono text-xs text-amber-400 font-bold">{s.pts}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
+                  </div>
                 ));
               }
               return STANDINGS.map(g => (
                 <div key={g.group}>
                   <h3 className="font-mono text-sm text-amber-400/60 mb-3">{g.group}</h3>
-                  <div className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl overflow-hidden">
+                  <div className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20">
+                    <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20" />
+                    <div className="relative z-10">
                     <table className="w-full text-left">
-                      <thead><tr className="text-white/25 text-[10px] border-b border-white/[0.04]">{["#","Team","P","W","D","L","GF","GA","Pts"].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
+                      <thead><tr className="text-white/25 text-[10px] border-b border-zinc-600/10">{[lang==="id"?"#":"#",lang==="id"?"Tim":"Team",t("match.p"),t("match.w"),t("match.d"),t("match.l"),t("match.gf"),t("match.ga"),t("match.pts")].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
                       <tbody>
                         {g.teams.map(s => (
-                          <tr key={s.team} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                          <tr key={s.team} className="border-b border-zinc-600/10 hover:bg-zinc-800/30">
                             <td className="p-2 font-mono text-xs text-white/40">{s.pos}</td>
                             <td className="p-2 font-mono text-xs text-white font-medium">{s.flag} {s.team}</td>
                             <td className="p-2 font-mono text-xs text-white/40">{s.p}</td>
@@ -332,11 +353,12 @@ export default function Matches() {
                             <td className="p-2 font-mono text-xs text-white/40">{s.l}</td>
                             <td className="p-2 font-mono text-xs text-white/40">{s.gf}</td>
                             <td className="p-2 font-mono text-xs text-white/40">{s.ga}</td>
-                            <td className="p-2 font-mono text-xs text-red-400 font-bold">{s.pts}</td>
+                            <td className="p-2 font-mono text-xs text-amber-400 font-bold">{s.pts}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </div>
               ));
@@ -352,7 +374,9 @@ export default function Matches() {
                 <h3 className="font-mono text-sm text-amber-400/60 mb-3 tracking-wider uppercase">{round.round}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {round.matches.map((m, mi) => (
-                    <div key={mi} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 hover:border-white/10 transition-colors">
+                    <div key={mi} className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-4 font-sans shadow-2xl border border-zinc-600/20 hover:border-emerald-500/20 transition-colors">
+                      <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20" />
+                      <div className="relative z-10">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="font-mono font-semibold text-white text-sm">{m.hf} {m.home}</span>
                         <span className={`font-mono font-bold text-lg shrink-0 ${m.hs !== null && m.as !== null ? "text-white" : "text-white/30"}`}>
@@ -363,6 +387,7 @@ export default function Matches() {
                       <div className="flex items-center justify-between text-[10px] font-mono text-white/25">
                         <span>{m.date} · {m.time}</span>
                         <span className="text-white/15 truncate ml-2">{m.venue}</span>
+                      </div>
                       </div>
                     </div>
                   ))}
@@ -377,6 +402,11 @@ export default function Matches() {
           <p className="font-mono text-[10px] text-white/15">{error ? error : "Live data via TxLINE (TxODDS) — Official Hackathon Sponsor · Auto-refresh 30s"}</p>
         </div>
       </div>
+
+      <footer className="border-t border-amber-500/10 py-6 text-center">
+        <p className="font-mono text-[10px] text-white/30">{t("footer.text")}</p>
+        <p className="font-mono text-[10px] text-white/20">{t("footer.sub")}</p>
+      </footer>
     </div>
   );
 }

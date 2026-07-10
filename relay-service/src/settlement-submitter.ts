@@ -140,6 +140,7 @@ export class SettlementSubmitter {
         .accounts({
           market: marketPda,
           dailyScoresMerkleRoots: new PublicKey(dailyScoresPda),
+          txlineProgram: new PublicKey(TXLINE_PROGRAM_ID),
         })
         .preInstructions([computeIx])
         .rpc();

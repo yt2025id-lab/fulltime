@@ -16,7 +16,7 @@ const BUTTON_CSS = `
   color: #fafaf6; letter-spacing: -0.06em; cursor: pointer;
 }
 ._btn-item { background-color: transparent; color: #1d1d1f; }
-._btn-item ._btn-bg { border-color: #c0392b; background-color: #c0392b; }
+._btn-item ._btn-bg { border-color: #f59e0b; background-color: #f59e0b; }
 ._btn-inner, ._btn-inner-hover, ._btn-inner-static { pointer-events: none; display: block; }
 ._btn-inner { position: relative; }
 ._btn-inner-hover { position: absolute; top: 0; left: 0; opacity: 0; transform: translateY(70%); color: #fafaf6; }
@@ -24,9 +24,9 @@ const BUTTON_CSS = `
 ._btn-bg, ._btn-bg-layer, ._btn-bg-layers { display: block; }
 ._btn-bg-layers { position: absolute; left: 50%; transform: translate(-50%); top: -60%; aspect-ratio: 1/1; width: max(200%, 10rem); }
 ._btn-bg-layer { border-radius: 9999px; position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scale(0); }
-._btn-bg-layer._l1 { background-color: #c0392b; }
-._btn-bg-layer._l2 { background-color: #a93226; }
-._btn-bg-layer._l3 { background-color: #922b21; }
+._btn-bg-layer._l1 { background-color: #f59e0b; }
+._btn-bg-layer._l2 { background-color: #d97706; }
+._btn-bg-layer._l3 { background-color: #b45309; }
 ._btn:hover ._btn-inner-static { opacity: 0; transform: translateY(-70%); transition: transform 1.4s cubic-bezier(0.19,1,0.22,1), opacity 0.3s linear; }
 ._btn:hover ._btn-inner-hover { opacity: 1; transform: translateY(0); transition: transform 1.4s cubic-bezier(0.19,1,0.22,1), opacity 1.4s cubic-bezier(0.19,1,0.22,1); }
 ._btn:hover ._btn-bg-layer { transition: transform 1.3s cubic-bezier(0.19,1,0.22,1), opacity 0.3s linear; }

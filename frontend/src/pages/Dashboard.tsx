@@ -7,6 +7,8 @@ import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Connection, clusterApiUrl } from "@solana/web3.js";
 import { fetchFixtures, type TxLineFixture } from "../lib/txline";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import { useLang } from "../lib/i18n/context";
+import LangToggle from "../components/LangToggle";
 import BN from "bn.js";
 
 const fadeIn = {
@@ -30,6 +32,8 @@ interface UIMarket {
   winningOption: number;
   isTrustless: boolean;
   settlementRoot: string;
+  settlementTs: number;
+  feeBps: number;
 }
 
 interface UIBet {
@@ -42,6 +46,13 @@ interface UIBet {
 
 function lamportsToSol(lamports: number) { return (lamports / 1e9).toFixed(4); }
 function solDisplay(lamports: number) { return Math.floor(lamports / LAMPORTS_PER_SOL).toString(); }
+function calcPayout(betAmount: number, totalPool: number, winningPool: number, feeBps: number): { gross: number, fee: number, net: number } {
+  if (winningPool === 0 || totalPool === 0) return { gross: 0, fee: 0, net: 0 };
+  const gross = BigInt(betAmount) * BigInt(totalPool) / BigInt(winningPool);
+  const fee = gross * BigInt(feeBps) / 10000n;
+  const net = gross - fee;
+  return { gross: Number(gross), fee: Number(fee), net: Number(net) };
+}
 
 function flagEmoji(name: string): string {
   const m: Record<string, string> = {
@@ -85,6 +96,7 @@ function marketPda(creator: PublicKey, fixtureId: number): PublicKey {
 async function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
 export default function Dashboard() {
+  const { t, lang } = useLang();
   const { publicKey, connected, disconnect, wallet } = useWallet();
   const { connection } = useConnection();
   const program = useProgram();
@@ -173,8 +185,13 @@ export default function Dashboard() {
         off += 8; // betting_open_time
         const closeTime = readI64(off); off += 8;
         const statusByte = readU8(off); off += 1;
-        off += 1; // winning_option
-        const isTrustless = readU8(off) === 1;
+        const winningOption = readU8(off); off += 1; // FIX: was off += 1 only
+        const isTrustless = readU8(off) === 1; off += 1; // FIX: was no off++
+        off += 32; // settlement_root
+        off += 2;  // settlement_epoch_day
+        const settlementTs = readI64(off); off += 8;
+        off += 8;  // dispute_until
+        const feeBps = readU16(off);
 
         const statusMap = ["pending", "open", "closed", "settled", "cancelled"];
         return {
@@ -185,8 +202,11 @@ export default function Dashboard() {
           poolYes, poolNo, totalPool: poolYes + poolNo,
           openTime: 0, closeTime,
           status: statusMap[statusByte] || "created",
-          winningOption: 255, isTrustless,
+          winningOption,
+          isTrustless,
           settlementRoot: "",
+          settlementTs,
+          feeBps,
         };
       });
       setMarkets(mapped);
@@ -423,18 +443,18 @@ export default function Dashboard() {
 
       <nav className="sticky top-0 z-40 border-b border-emerald-500/20 bg-zinc-900/90 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
-            <span className="text-lg">⚽</span>
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-xl">⚽</span>
             <span className="font-mono font-bold text-white text-lg tracking-tight">Full<span className="text-white/40">Time</span></span>
-          </div>
+          </Link>
           <div className="flex items-center justify-center gap-2">
-            <Link to="/app" className="bg-white/15 rounded-full px-4 py-1.5 text-sm font-mono text-white font-medium">Markets</Link>
-            <Link to="/matches" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">Matches</Link>
+            <Link to="/app" className="bg-white/15 rounded-full px-4 py-1.5 text-sm font-mono text-white font-medium">{t("nav.markets")}</Link>
+            <Link to="/matches" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">{t("nav.matches")}</Link>
             <Link to="/faq" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">FAQ</Link>
-            <Link to="/faucet" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">Faucet</Link>
+            <Link to="/faucet" className="rounded-full px-4 py-1.5 text-sm font-mono text-white/50 hover:text-white transition-colors">{t("nav.faucet")}</Link>
           </div>
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <LangToggle />
             {connected ? (
               <WalletDisconnectButton style={{ background: "#262626", color: "#fff", borderRadius: "9999px", padding: "6px 16px", fontSize: "12px", fontFamily: "ui-monospace,monospace", border: "none" }} />
             ) : (
@@ -456,14 +476,14 @@ export default function Dashboard() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <motion.div {...fadeIn} transition={{ duration: 0.8, ease: "easeOut" }} className="text-center mb-10">
-          <p className="text-sm font-mono text-neutral-500 mb-4">// dashboard</p>
+          <p className="text-sm font-mono text-neutral-500 mb-4">{t("dash.subtitle")}</p>
           <h1 className="font-heading text-white text-5xl md:text-6xl lg:text-[5rem] leading-[0.9] tracking-[-3px]">
-            World Cup<br /><span className="bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 text-transparent bg-clip-text italic">Prediction</span>
-          </h1>
-          <p className="text-sm text-neutral-400 font-mono mt-4 max-w-md mx-auto leading-relaxed">
-            Trustless prediction markets powered by TxLINE and Solana.
+              World Cup<br /><span className="bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 text-transparent bg-clip-text italic">{lang === "id" ? "Prediksi" : "Prediction"}</span>
+            </h1>
+            <p className="text-sm text-neutral-400 font-mono mt-4 max-w-md mx-auto leading-relaxed">
+              {lang === "id" ? "Pasar prediksi tanpa kepercayaan didukung oleh TxLINE dan Solana." : "Trustless prediction markets powered by TxLINE and Solana."}
           </p>
-          <p className="text-xs text-white/20 font-mono mt-2">{markets.filter(m => m.status !== "cancelled" && showMarket(m.fixtureId)).length} markets</p>
+          <p className="text-xs text-white/20 font-mono mt-2">{markets.filter(m => m.status !== "cancelled" && showMarket(m.fixtureId)).length} {lang === "id" ? "pasar" : "markets"}</p>
           {!connected && (
             <div className="mt-6">
               <WalletModalButton style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", borderRadius: "9999px", padding: "12px 32px", fontSize: "14px", fontFamily: "ui-monospace, monospace", fontWeight: 700, border: "none", cursor: "pointer" }} />
@@ -471,14 +491,14 @@ export default function Dashboard() {
           )}
         </motion.div>
 
-        {/* World Cup 2026 Fixtures — Auto-Create Markets */}
+        {/* World Cup 2026 Fixtures — Auto-Create {t("nav.markets")} */}
         {connected && fixtures.length > 0 && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-mono tracking-[-1px] text-white text-2xl">World Cup 2026 Fixtures</h2>
-              <button onClick={() => setShowFixtures(!showFixtures)} className="text-xs font-mono text-white/40 hover:text-white transition-colors">{showFixtures ? "Hide" : "Show"}</button>
+              <h2 className="font-mono tracking-[-1px] text-white text-2xl">{lang === "id" ? "Jadwal Piala Dunia 2026" : "World Cup 2026 Fixtures"}</h2>
+              <button onClick={() => setShowFixtures(!showFixtures)} className="text-xs font-mono text-white/40 hover:text-white transition-colors">{showFixtures ? (lang === "id" ? "Sembunyikan" : "Hide") : (lang === "id" ? "Tampilkan" : "Show")}</button>
             </div>
-            <p className="font-mono text-xs text-white/30 mb-4">Create a trustless prediction market directly from these TxLINE fixtures — auto-settled via Merkle proof CPI.</p>
+            <p className="font-mono text-xs text-white/30 mb-4">{lang === "id" ? "Buat pasar prediksi tanpa kepercayaan langsung dari jadwal TxLINE — diselesaikan otomatis via Merkle proof CPI." : "Create a trustless prediction market directly from these TxLINE fixtures — auto-settled via Merkle proof CPI."}</p>
             {showFixtures && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
                 {fixtures.slice(0, 8).map(f => {
@@ -521,7 +541,7 @@ export default function Dashboard() {
                           onClick={() => createFixtureMarket(f, qt)}
                           disabled={creating}
                           className="rounded-lg border border-amber-500/40 bg-transparent px-4 py-2 text-xs font-medium text-amber-400 transition-colors duration-300 hover:bg-amber-400 hover:text-black disabled:opacity-30"
-                        >Create & Bet</button>
+                        >{lang === "id" ? "Buat & Taruh" : "Create & Bet"}</button>
                       </div>
                     </div>
                   );
@@ -549,7 +569,7 @@ export default function Dashboard() {
                 </div>
                 {(balance !== null && balance < 0.5 * 1e9) && (
                   <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                    <p className="text-xs font-mono text-yellow-300/70 text-center">Low balance — use <Link to="/faucet" className="underline text-yellow-300">Faucet</Link> to get test SOL</p>
+                    <p className="text-xs font-mono text-yellow-300/70 text-center">{lang === "id" ? "Saldo rendah — gunakan" : "Low balance — use"} <Link to="/faucet" className="underline text-yellow-300">{t("nav.faucet")}</Link> {lang === "id" ? "untuk dapat SOL tes" : "to get test SOL"}</p>
                   </div>
                 )}
               </div>
@@ -564,17 +584,17 @@ export default function Dashboard() {
               <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20"></div>
               <div className="relative flex flex-col gap-4">
                 <div className="border-b border-zinc-600/20 pb-4">
-                  <p className="font-semibold text-neutral-200 text-sm">Custom Market</p>
-                  <p className="text-[10px] text-neutral-500 font-mono mt-1">Create a manual YES/NO market for any question. You resolve the outcome.</p>
+                  <p className="font-semibold text-neutral-200 text-sm">{lang === "id" ? "Pasar Kustom" : "Custom Market"}</p>
+                  <p className="text-[10px] text-neutral-500 font-mono mt-1">{lang === "id" ? "Buat pasar YES/NO manual untuk pertanyaan apa pun. Anda yang menentukan hasilnya." : "Create a manual YES/NO market for any question. You resolve the outcome."}</p>
                 </div>
-                <input className="w-full bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
+                <input className="w-full bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" placeholder={lang === "id" ? "Akankah Argentina menang Piala Dunia 2026?" : "Will Argentina win the 2026 World Cup?"} value={question} onChange={e => setQuestion(e.target.value)} />
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input className="flex-1 bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
                 </div>
                 <div className="flex items-center gap-4">
-                  <p className="text-[10px] font-mono text-neutral-500">Fee: <span className="text-neutral-300 font-medium">2%</span></p>
+                  <p className="text-[10px] font-mono text-neutral-500">{lang === "id" ? "Biaya:" : "Fee:"} <span className="text-neutral-300 font-medium">2%</span></p>
                 </div>
-                <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full rounded-lg border border-amber-500/40 bg-transparent px-4 py-2 text-xs font-medium text-amber-400 transition-colors duration-300 hover:bg-amber-400 hover:text-black disabled:opacity-30">{creating ? "Creating..." : "Create Market"}</button>
+                <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full rounded-lg border border-amber-500/40 bg-transparent px-4 py-2 text-xs font-medium text-amber-400 transition-colors duration-300 hover:bg-amber-400 hover:text-black disabled:opacity-30">{creating ? (lang === "id" ? "Membuat..." : "Creating...") : t("dash.create")}</button>
               </div>
             </div>
           </motion.div>
@@ -582,7 +602,9 @@ export default function Dashboard() {
 
         {/* Filters */}
         <div className="flex items-center gap-2 mb-4">
-          {["all", "pending", "open", "closed", "settled"].map((f) => (
+          {(["all", "pending", "open", "closed", "settled"] as const).map((f) => {
+            const fl: Record<string, string> = { all: t("dash.filterAll"), pending: "Pending", open: t("dash.filterOpen"), closed: t("dash.filterClosed"), settled: t("dash.filterSettled") };
+            return (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -592,29 +614,30 @@ export default function Dashboard() {
                   : "bg-white/[0.05] text-white/40 hover:text-white border border-transparent"
               }`}
             >
-              {f}
+              {fl[f]}
             </button>
-          ))}
+          );
+          })}
         </div>
 
-        {/* Markets */}
+        {/* {t("nav.markets")} */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">Markets <span className="text-white/30 text-lg">({markets.filter(m => {
+          <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">{t("nav.markets")} <span className="text-white/30 text-lg">({markets.filter(m => {
             if (m.status === "cancelled") return false;
             if (!m.isTrustless && m.status === "settled") return false;
             if (!showMarket(m.fixtureId)) return false;
             return true;
           }).length})</span></h2>
-          <button onClick={reload} disabled={loading} className="bg-zinc-800/30 border border-zinc-600/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
+          <button onClick={reload} disabled={loading} className="bg-zinc-800/30 border border-zinc-600/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? (lang === "id" ? "Memuat..." : "Loading...") : t("dash.refresh")}</button>
         </div>
 
         {!connected ? (
           <div className="text-center py-20">
             <div className="bg-zinc-800/30 border border-zinc-600/20 backdrop-blur-sm w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><span className="font-mono tracking-[-1px] text-white/40 text-3xl lowercase">f</span></div>
-            <p className="text-white/40 font-mono text-sm">Connect wallet to view markets</p>
+            <p className="text-white/40 font-mono text-sm">{lang === "id" ? "Hubungkan dompet untuk melihat pasar" : "Connect wallet to view markets"}</p>
           </div>
         ) : markets.length === 0 && !loading ? (
-          <div className="text-center py-20"><p className="text-white/40 font-mono text-sm">No markets yet — create one above</p></div>
+          <div className="text-center py-20"><p className="text-white/40 font-mono text-sm">{lang === "id" ? "Belum ada pasar — buat satu di atas" : "No markets yet — create one above"}</p></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {markets.filter(m => {
@@ -631,7 +654,7 @@ export default function Dashboard() {
               const myBet = myBetOnMarket(m.pubkey.toString());
               const yesPct = m.totalPool > 0 ? (m.poolYes * 100 / m.totalPool).toFixed(1) : "50";
               const isCreator = publicKey && m.creator === publicKey.toBase58();
-              const canResolve = isCreator && !m.isTrustless && m.status === "closed";
+              const canResolve = isCreator && m.status === "closed" && (!m.isTrustless || (now.getTime() / 1000 > m.closeTime + 3600));
               const canClose = m.status === "open" && now.getTime() / 1000 > m.closeTime;
               const canOpen = m.status === "pending";
               const canCancel = isCreator && ["pending", "open", "closed"].includes(m.status);
@@ -670,11 +693,11 @@ export default function Dashboard() {
                     {/* Pools */}
                     <div className="flex divide-x divide-neutral-800">
                       <div className="flex-1 pr-3">
-                        <p className="text-[10px] font-medium text-neutral-500 font-mono">YES</p>
+                        <p className="text-[10px] font-medium text-neutral-500 font-mono">{t("dash.yes")}</p>
                         <p className="text-base font-semibold text-green-400">{lamportsToSol(m.poolYes)} SOL</p>
                       </div>
                       <div className="flex-1 pl-3">
-                        <p className="text-[10px] font-medium text-neutral-500 font-mono">NO</p>
+                        <p className="text-[10px] font-medium text-neutral-500 font-mono">{t("dash.no")}</p>
                         <p className="text-base font-semibold text-red-400">{lamportsToSol(m.poolNo)} SOL</p>
                       </div>
                     </div>
@@ -684,25 +707,70 @@ export default function Dashboard() {
                       <div className="h-full w-full rounded-full bg-zinc-700/30 overflow-hidden">
                         <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-green-500 transition-all" style={{ width: `${yesPct}%` }} />
                       </div>
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-white/70 font-semibold">{yesPct}% YES</span>
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-white/70 font-semibold">{yesPct}% {t("dash.yes")}</span>
                     </div>
 
                     {/* Deadline */}
-                    <p className="text-[10px] font-mono text-neutral-500">Deadline: {dt(m.closeTime)}</p>
+                    <p className="text-[10px] font-mono text-neutral-500">{lang === "id" ? "Tenggat:" : "Deadline:"} {dt(m.closeTime)}</p>
 
                     {/* Your Bet */}
                     {myBet && (
                       <div className="border-t border-zinc-600/20 pt-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs text-neutral-400 font-mono">Your bet: <span className={myBet.optionIndex === 0 ? "text-green-400" : "text-red-400"}>{myBet.optionIndex === 0 ? "YES" : "NO"} {lamportsToSol(myBet.amount)} SOL</span>
-                            {myBet.claimed && <span className="ml-1 text-red-400">(Claimed)</span>}
+                          <p className="text-xs text-neutral-400 font-mono">{lang === "id" ? "Taruhanmu:" : "Your bet:"} <span className={myBet.optionIndex === 0 ? "text-green-400" : "text-red-400"}>{myBet.optionIndex === 0 ? t("dash.yes") : t("dash.no")} {lamportsToSol(myBet.amount)} SOL</span>
+                            {myBet.claimed && <span className="ml-1 text-red-400">({lang === "id" ? "Diklaim" : "Claimed"})</span>}
                           </p>
                         </div>
                         {isCancelled && !myBet.claimed && (
-                          <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-black">Refund</button>
+                          <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-black">{t("dash.refund")}</button>
                         )}
-                        {m.status === "settled" && myBet.optionIndex === m.winningOption && !myBet.claimed && (
-                          <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black">Claim Winnings</button>
+                        {m.status === "settled" && myBet && myBet.optionIndex === m.winningOption && !myBet.claimed && (
+                          <>
+                            <div className="mt-2 rounded-lg border border-green-500/30 bg-green-500/5 p-3">
+                              {(() => {
+                                const winningPool = m.winningOption === 0 ? m.poolYes : m.poolNo;
+                                const payout = calcPayout(myBet.amount, m.totalPool, winningPool, m.feeBps || 200);
+                                return (
+                                  <>
+                                    <p className="text-sm font-bold text-green-400">{lang === "id" ? "🎉 Kamu Menang!" : "🎉 You Won!"}</p>
+                                    <p className="text-[10px] text-green-400/70 mt-1 font-mono">
+                                      {lang === "id" ? "Hadiah:" : "Prize:"} {lamportsToSol(payout.net)} SOL
+                                      <span className="text-neutral-500 ml-1">
+                                        ({lang === "id" ? "biaya" : "fee"} {(m.feeBps || 200) / 100}%: -{lamportsToSol(payout.fee)} SOL)
+                                      </span>
+                                    </p>
+                                    <p className="text-[10px] text-green-400/60 font-mono">
+                                      {lang === "id" ? "Profit:" : "Profit:"} +{lamportsToSol(payout.net - myBet.amount)} SOL
+                                    </p>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                            <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-green-500/50 bg-green-500/10 px-4 py-2 text-sm font-bold text-green-400 transition-all duration-300 hover:bg-green-400 hover:text-black">
+                              {lang === "id" ? `Klaim ${lamportsToSol((() => { const wp = m.winningOption === 0 ? m.poolYes : m.poolNo; return calcPayout(myBet.amount, m.totalPool, wp, m.feeBps || 200).net; })())} SOL` : `Claim ${lamportsToSol((() => { const wp = m.winningOption === 0 ? m.poolYes : m.poolNo; return calcPayout(myBet.amount, m.totalPool, wp, m.feeBps || 200).net; })())} SOL`}
+                            </button>
+                          </>
+                        )}
+                        {m.status === "settled" && myBet && myBet.optionIndex !== m.winningOption && !myBet.claimed && (
+                          <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                            <p className="text-sm font-bold text-red-400">{lang === "id" ? "😔 Kamu Kalah" : "😔 You Lost"}</p>
+                            <p className="text-[10px] text-red-400/70 mt-1 font-mono">
+                              {lang === "id" ? "Pemenang:" : "Winner:"} {m.winningOption === 0 ? t("dash.yes") : t("dash.no")}
+                            </p>
+                          </div>
+                        )}
+                        {m.status === "settled" && myBet && myBet.claimed && (
+                          <div className="mt-2 rounded-lg border border-green-500/20 bg-green-500/5 p-2">
+                            <p className="text-xs text-green-400/80">{lang === "id" ? "✅ Hadiah sudah diklaim" : "✅ Prize claimed"}</p>
+                          </div>
+                        )}
+                        {m.status === "settled" && !myBet && (
+                          <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2">
+                            <p className="text-xs text-amber-400/80">
+                              {lang === "id" ? "Pemenang:" : "Winner:"} <span className="font-bold">{m.winningOption === 0 ? t("dash.yes") : t("dash.no")}</span>
+                              {m.settlementTs > 0 && <span className="ml-2 text-neutral-500">· {new Date(m.settlementTs * 1000).toLocaleDateString()}</span>}
+                            </p>
+                          </div>
                         )}
                       </div>
                     )}
@@ -713,22 +781,29 @@ export default function Dashboard() {
                         <>
                           {betMarket === m.pubkey.toString() ? (
                             <div className="w-full flex gap-2">
-                              <input type="number" step="0.01" min="0.01" className="flex-1 bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
-                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 0 ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-green-500/50 bg-transparent text-green-400 hover:bg-green-400 hover:text-black'}`}>{myBet?.optionIndex === 0 ? '✓ BET YES' : 'YES'}</button>
-                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-black'}`}>{myBet?.optionIndex === 1 ? '✓ BET NO' : 'NO'}</button>
+                               <input type="number" step="0.01" min="0.01" className="flex-1 bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" placeholder={lang === "id" ? "Jumlah SOL" : "SOL amount"} value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
+                                <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 0 ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-green-500/50 bg-transparent text-green-400 hover:bg-green-400 hover:text-black'}`}>{myBet?.optionIndex === 0 ? `✓ BET ${t("dash.yes")}` : t("dash.yes")}</button>
+                                <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-black'}`}>{myBet?.optionIndex === 1 ? `✓ BET ${t("dash.no")}` : t("dash.no")}</button>
                             </div>
                           ) : (
-                            <button onClick={() => setBetMarket(m.pubkey.toString())} className={`flex-1 rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:cursor-default ${myBet ? 'border-amber-500/40 text-amber-400/70' : 'border-amber-500/40 text-amber-400 hover:bg-amber-400 hover:text-black'}`}>{myBet ? '✓ Bet Active' : 'Place Bet'}</button>
+                            <button onClick={() => setBetMarket(m.pubkey.toString())} className={`flex-1 rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:cursor-default ${myBet ? 'border-amber-500/40 text-amber-400/70' : 'border-amber-500/40 text-amber-400 hover:bg-amber-400 hover:text-black'}`}>{myBet ? t("dash.betActive") : t("dash.place")}</button>
                           )}
                         </>
                       )}
-                      {canOpen && <button onClick={() => openMarket(m.pubkey)} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black">Open Market</button>}
-                      {canClose && <button onClick={() => closeBetting(m.pubkey)} className="flex-1 rounded-lg border border-yellow-500/50 bg-transparent px-4 py-2 text-xs font-medium text-yellow-400 transition-colors duration-300 hover:bg-yellow-400 hover:text-black">Close Betting</button>}
+                      {canOpen && <button onClick={() => openMarket(m.pubkey)} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black">{lang === "id" ? "Buka Pasar" : "Open Market"}</button>}
+                      {canClose && <button onClick={() => closeBetting(m.pubkey)} className="flex-1 rounded-lg border border-yellow-500/50 bg-transparent px-4 py-2 text-xs font-medium text-yellow-400 transition-colors duration-300 hover:bg-yellow-400 hover:text-black">{lang === "id" ? "Tutup Taruhan" : "Close Betting"}</button>}
                       {canResolve && (
                         <>
-                          <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black disabled:opacity-30">Resolve YES</button>
-                          <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-red-500/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-black disabled:opacity-30">Resolve NO</button>
+                          <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black disabled:opacity-30">
+                            {lang === "id" ? `Selesaikan ${t("dash.yes")}` : `Resolve ${t("dash.yes")}`}{m.isTrustless ? " *" : ""}
+                          </button>
+                          <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-red-500/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-black disabled:opacity-30">
+                            {lang === "id" ? `Selesaikan ${t("dash.no")}` : `Resolve ${t("dash.no")}`}{m.isTrustless ? " *" : ""}
+                          </button>
                         </>
+                      )}
+                      {canResolve && m.isTrustless && (
+                        <p className="w-full text-[9px] text-amber-400/50 font-mono text-center">{lang === "id" ? "* Oracle gagal — override creator setelah 1 jam" : "* Oracle failed — creator override after 1h timeout"}</p>
                       )}
                       {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-neutral-500 transition-colors duration-300 hover:bg-amber-400 hover:text-black hover:border-amber-400">🗑</button>}
                     </div>
@@ -747,16 +822,16 @@ export default function Dashboard() {
               className="ml-auto w-full max-w-md h-full bg-zinc-900 border-l border-zinc-600/20 overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-mono font-bold text-white text-xl">Portfolio</h2>
+                  <h2 className="font-mono font-bold text-white text-xl">{lang === "id" ? "Portofolio" : "Portfolio"}</h2>
                   <button onClick={() => setShowPortfolio(false)} className="text-white/40 hover:text-white font-mono text-sm">✕</button>
                 </div>
                 {publicKey && <div className="bg-zinc-800/40 border border-zinc-600/20 rounded-2xl p-4 mb-6">
-                  <div className="text-xs text-white/40 font-mono mb-1">Wallet</div>
+                  <div className="text-xs text-white/40 font-mono mb-1">{lang === "id" ? "Dompet" : "Wallet"}</div>
                   <div className="font-mono text-xs text-white/50 break-all">{publicKey.toBase58().slice(0,12)}...{publicKey.toBase58().slice(-4)}</div>
                   <div className="mt-2 font-mono text-lg text-white font-bold">{balance !== null ? solDisplay(balance) : "—"} <span className="text-amber-400/60 text-sm">SOL</span></div>
                 </div>}
                 {bets.length === 0 ? (
-                  <p className="text-white/30 font-mono text-sm text-center py-8">No bets yet</p>
+                  <p className="text-white/30 font-mono text-sm text-center py-8">{lang === "id" ? "Belum ada taruhan" : "No bets yet"}</p>
                 ) : (
                   <div className="space-y-3">{bets.map(b => {
                     const m = markets.find(x => x.pubkey.toString() === b.market);
@@ -766,11 +841,11 @@ export default function Dashboard() {
                     return <div key={b.pubkey.toString()} className="bg-zinc-800/40 border border-zinc-600/20 rounded-xl p-4">
                       <div className="text-xs text-white/50 font-mono truncate mb-2">{m?.question || b.market.slice(0,20)}</div>
                       <div className="flex items-center justify-between">
-                        <div><span className={`font-mono text-sm font-bold ${b.optionIndex===0?"text-green-400":"text-red-400"}`}>{b.optionIndex===0?"YES":"NO"}</span><span className="font-mono text-sm text-white/60 ml-2">{lamportsToSol(b.amount)} SOL</span></div>
+                        <div><span className={`font-mono text-sm font-bold ${b.optionIndex===0?"text-green-400":"text-red-400"}`}>{b.optionIndex===0 ? t("dash.yes") : t("dash.no")}</span><span className="font-mono text-sm text-white/60 ml-2">{lamportsToSol(b.amount)} SOL</span></div>
                         <div className="flex items-center gap-2">
-                          {b.claimed ? <span className="text-xs text-green-400/60 font-mono">Claimed ✓</span> :
-                           canClaim ? <button onClick={() => claimPayout(new PublicKey(b.market), b.pubkey)} className="bg-green-600 hover:bg-green-500 text-white rounded-full px-3 py-1 text-xs font-mono font-semibold">Claim</button> :
-                           canRefund ? <button onClick={() => refundBet(new PublicKey(b.market), b.pubkey)} className="bg-yellow-600 hover:bg-yellow-500 text-white rounded-full px-3 py-1 text-xs font-mono font-semibold">Refund</button> :
+                          {b.claimed ? <span className="text-xs text-green-400/60 font-mono">{lang === "id" ? "Diklaim ✓" : "Claimed ✓"}</span> :
+                           canClaim ? <button onClick={() => claimPayout(new PublicKey(b.market), b.pubkey)} className="bg-green-600 hover:bg-green-500 text-white rounded-full px-3 py-1 text-xs font-mono font-semibold">{t("dash.claim")}</button> :
+                           canRefund ? <button onClick={() => refundBet(new PublicKey(b.market), b.pubkey)} className="bg-yellow-600 hover:bg-yellow-500 text-white rounded-full px-3 py-1 text-xs font-mono font-semibold">{t("dash.refund")}</button> :
                            <span className="text-xs text-white/20 font-mono">{m?.status||"—"}</span>}
                         </div>
                       </div>
@@ -794,6 +869,11 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <footer className="border-t border-amber-500/10 py-6 text-center">
+        <p className="font-mono text-[10px] text-white/30">{t("footer.text")}</p>
+        <p className="font-mono text-[10px] text-white/20">{t("footer.sub")}</p>
+      </footer>
     </div>
   );
 }

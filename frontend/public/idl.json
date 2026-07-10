@@ -887,6 +887,10 @@
         },
         {
           "name": "daily_scores_merkle_roots"
+        },
+        {
+          "name": "txline_program",
+          "address": "6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J"
         }
       ],
       "args": [
@@ -1141,6 +1145,11 @@
       "code": 6020,
       "name": "FixtureIdRequired",
       "msg": "Fixture ID required for trustless markets"
+    },
+    {
+      "code": 6021,
+      "name": "ResolveTooEarly",
+      "msg": "Trustless market override: wait 1h after betting close"
     }
   ],
   "types": [

@@ -14,6 +14,9 @@ interface BetView {
   marketQuestion?: string;
   marketStatus?: string;
   marketWinner?: number;
+  poolYes?: number;
+  poolNo?: number;
+  feeBps?: number;
 }
 
 export default function Portfolio() {
@@ -45,22 +48,32 @@ export default function Portfolio() {
           let marketQuestion = "";
           let marketStatus = "";
           let marketWinner = 0;
+          let poolYes = 0;
+          let poolNo = 0;
+          let feeBps = 200;
           try {
             const m = await (program as any).account.market.fetch(bet.market);
             marketQuestion = m.question;
             marketStatus = Object.keys(m.status)[0];
             marketWinner = m.winningOption;
+            poolYes = m.poolYes?.toNumber() || 0;
+            poolNo = m.poolNo?.toNumber() || 0;
+            feeBps = m.feeBps || 200;
           } catch {}
 
+          const betAmt = bet.amount.toNumber();
           data.push({
             pda: b.publicKey.toBase58(),
             market: bet.market.toBase58(),
             optionIndex: bet.optionIndex,
-            amount: bet.amount.toNumber() / LAMPORTS_PER_SOL,
+            amount: betAmt / LAMPORTS_PER_SOL,
             claimed: bet.claimed,
             marketQuestion,
             marketStatus,
             marketWinner,
+            poolYes: poolYes / LAMPORTS_PER_SOL,
+            poolNo: poolNo / LAMPORTS_PER_SOL,
+            feeBps,
           });
         } catch {}
       }
@@ -121,7 +134,7 @@ export default function Portfolio() {
     );
   }
 
-  const options = ["HOME", "DRAW", "AWAY"];
+  const options = ["YES", "NO"];
   const active = bets.filter((b) => !b.claimed);
   const claimed = bets.filter((b) => b.claimed);
 
@@ -144,7 +157,17 @@ export default function Portfolio() {
           <>
             <h2 className="text-xl font-black mb-4">ACTIVE ({active.length})</h2>
             <div className="space-y-3 mb-8">
-              {active.map((b) => (
+              {active.map((b) => {
+                const isWinner = b.marketStatus === "settled" && b.marketWinner === b.optionIndex;
+                const isLoser = b.marketStatus === "settled" && b.marketWinner !== undefined && b.marketWinner !== b.optionIndex;
+                const totalPool = ((b.poolYes || 0) + (b.poolNo || 0));
+                const winningPool = b.marketWinner === 0 ? (b.poolYes || 0) : (b.poolNo || 0);
+                const amountLamports = Math.round(b.amount * LAMPORTS_PER_SOL);
+                const gross = totalPool > 0 && winningPool > 0 ? (amountLamports * totalPool) / winningPool : 0;
+                const fee = gross * (b.feeBps || 200) / 10000;
+                const net = gross - fee;
+
+                return (
                 <div key={b.pda} className="border-4 border-black p-4 shadow-[4px_4px_0px_#000]">
                   <div className="flex justify-between items-start">
                     <div>
@@ -156,10 +179,16 @@ export default function Portfolio() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      {b.marketStatus === "settled" && b.marketWinner === b.optionIndex && (
-                        <button onClick={() => claim(b)} className="bg-[#FF1493] text-white text-xs font-bold px-3 py-1.5 border-2 border-black">
-                          CLAIM
-                        </button>
+                      {isWinner && (
+                        <div>
+                          <p className="text-xs text-green-600 font-bold mb-1">WINNER · Prize: {(net / LAMPORTS_PER_SOL).toFixed(4)} SOL</p>
+                          <button onClick={() => claim(b)} className="bg-[#FF1493] text-white text-xs font-bold px-3 py-1.5 border-2 border-black">
+                            CLAIM
+                          </button>
+                        </div>
+                      )}
+                      {isLoser && (
+                        <p className="text-xs text-red-500 font-bold">LOST</p>
                       )}
                       {b.marketStatus === "cancelled" && (
                         <button onClick={() => refund(b)} className="bg-[#FFD700] text-xs font-bold px-3 py-1.5 border-2 border-black">

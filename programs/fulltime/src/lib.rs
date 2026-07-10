@@ -4,6 +4,7 @@ declare_id!("58a2h7zogfV5ZgUsfyr1DZ36j1bgcwfCkGvd8fwppy5x");
 
 const DISPUTE_WINDOW_SECONDS: i64 = 3600;
 const PLATFORM_FEE_BPS: u16 = 200;
+const TRUSTLESS_OVERRIDE_TIMEOUT: i64 = 3600; // 1 jam — creator bisa resolve trustless market setelah oracle gagal
 
 const TXLINE_TXORACLE_ID: Pubkey = pubkey!("6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J");
 
@@ -219,6 +220,8 @@ pub enum FullTimeError {
     NotManualMarket,
     #[msg("Fixture ID required for trustless markets")]
     FixtureIdRequired,
+    #[msg("Trustless market override: wait 1h after betting close")]
+    ResolveTooEarly,
 }
 
 // ─── Contexts ──────────────────────────────────────────────────────
@@ -310,6 +313,10 @@ pub struct SettleMarket<'info> {
 
     /// CHECK: PDA daily_scores_roots
     pub daily_scores_merkle_roots: AccountInfo<'info>,
+
+    /// CHECK: TxLINE program for CPI
+    #[account(address = TXLINE_TXORACLE_ID)]
+    pub txline_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -411,13 +418,13 @@ pub struct RefundBet<'info> {
 
 // ─── Core CPI Logic ────────────────────────────────────────────────
 
-fn verify_stat(
+fn verify_stat<'info>(
     target_ts: i64,
     fixture_summary: &ScoresBatchSummary,
     fixture_proof: &[ProofNode],
     main_tree_proof: &[ProofNode],
     stat: &StatTerm,
-    daily_scores_merkle_roots: &AccountInfo,
+    account_infos: &[AccountInfo<'info>],
 ) -> Result<()> {
     let predicate = TraderPredicate {
         threshold: -1,
@@ -455,7 +462,7 @@ fn verify_stat(
     data.push(0u8);
 
     let daily_meta = anchor_lang::solana_program::instruction::AccountMeta::new_readonly(
-        daily_scores_merkle_roots.key(),
+        account_infos[0].key(),
         false,
     );
 
@@ -465,7 +472,7 @@ fn verify_stat(
             accounts: vec![daily_meta],
             data,
         },
-        &[daily_scores_merkle_roots.clone()],
+        account_infos,
     ).map_err(|_| error!(FullTimeError::MerkleVerificationFailed))?;
 
     Ok(())
@@ -651,13 +658,18 @@ pub mod fulltime {
             FullTimeError::InvalidDailyScoresRoots
         );
 
+        let cpi_accounts = [
+            ctx.accounts.daily_scores_merkle_roots.clone(),
+            ctx.accounts.txline_program.clone(),
+        ];
+
         verify_stat(
             target_ts,
             &fixture_summary,
             &fixture_proof,
             &main_tree_proof,
             &stat_a,
-            &ctx.accounts.daily_scores_merkle_roots,
+            &cpi_accounts,
         )?;
 
         verify_stat(
@@ -666,7 +678,7 @@ pub mod fulltime {
             &fixture_proof,
             &main_tree_proof,
             &stat_b,
-            &ctx.accounts.daily_scores_merkle_roots,
+            &cpi_accounts,
         )?;
 
         let home_goals = stat_a.stat_to_prove.value;
@@ -704,8 +716,17 @@ pub mod fulltime {
     ) -> Result<()> {
         let market = &mut ctx.accounts.market;
 
-        require!(!market.is_trustless, FullTimeError::NotManualMarket);
         require!(market.status == MarketStatus::Closed, FullTimeError::MarketNotClosed);
+
+        if market.is_trustless {
+            let now = Clock::get()?.unix_timestamp;
+            require!(
+                now >= market.betting_close_time
+                    .checked_add(TRUSTLESS_OVERRIDE_TIMEOUT)
+                    .ok_or(FullTimeError::MathOverflow)?,
+                FullTimeError::ResolveTooEarly
+            );
+        }
 
         let now = Clock::get()?.unix_timestamp;
         market.status = MarketStatus::Settled;

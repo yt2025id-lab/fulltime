@@ -5,6 +5,8 @@ import BlurText from "../components/BlurText";
 import Button from "../components/Button";
 import WorldCupBadge from "../components/WorldCupBadge";
 import GlowCard from "../components/GlowCard";
+import { useLang } from "../lib/i18n/context";
+import LangToggle from "../components/LangToggle";
 
 const HERO_VIDEO =
   "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_080021_d598092b-c4c2-4e53-8e46-94cf9064cd50.mp4";
@@ -59,14 +61,14 @@ const countries = [
 ];
 
 const Marquee = ({ items, reverse }: { items: string[]; reverse?: boolean }) => (
-  <div className="relative z-30 bg-amber-400/90 backdrop-blur-md border-y border-amber-600/20 py-3 overflow-hidden">
+  <div className="relative z-30 bg-emerald-950/80 backdrop-blur-md border-y border-amber-500/20 py-3 overflow-hidden">
     <div className={`flex animate-marquee whitespace-nowrap ${reverse ? "flex-row-reverse" : ""}`} style={reverse ? { animationDirection: "reverse" } : {}}>
       {[...Array(2)].map((_, lap) => (
         <div key={lap} className="flex items-center gap-12 px-6">
           {items.map((c, i) => (
             <span key={i}>
-              <span className="text-amber-950 font-mono text-sm md:text-base font-medium tracking-wide">{c}</span>
-              {i < items.length - 1 && <span className="text-amber-950/50 ml-12">🏆</span>}
+              <span className="text-white/80 font-mono text-sm md:text-base font-medium tracking-wide">{c}</span>
+              {i < items.length - 1 && <span className="text-amber-500/50 ml-12">🏆</span>}
             </span>
           ))}
         </div>
@@ -82,6 +84,7 @@ const c3 = countries.slice(chunkSize * 2, chunkSize * 3);
 const c4 = countries.slice(chunkSize * 3);
 
 export default function Landing() {
+  const { t, lang } = useLang();
   const navigate = useNavigate();
 
   return (
@@ -97,6 +100,7 @@ export default function Landing() {
         />
 
         <div className="relative z-10 flex flex-col h-full">
+          <div className="absolute top-4 right-4 z-50"><LangToggle /></div>
           <div className="flex-1 flex flex-col items-center justify-start text-center px-4 pt-12">
             <div className="absolute inset-0 bg-gradient-to-t from-transparent via-black/20 to-black/40 pointer-events-none" />
 
@@ -107,12 +111,12 @@ export default function Landing() {
             >
               <WorldCupBadge />
               <p className="text-xl md:text-2xl text-amber-200 font-mono font-semibold tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                Predict. Bet. Win.
+                {t("landing.hero.tagline")}
               </p>
             </motion.div>
 
             <BlurText
-              text="Predict the World Cup. Win on Solana."
+              text={t("landing.hero.title")}
               className="text-5xl md:text-6xl lg:text-[4rem] font-mono tracking-wider text-white leading-[1] max-w-4xl tracking-[-2px] relative drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]"
               delay={0.1}
             />
@@ -122,9 +126,9 @@ export default function Landing() {
               transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
               className="mt-10 text-xl md:text-2xl text-white max-w-2xl font-mono font-medium leading-snug relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
             >
-              The only prediction market where truth is mathematically proven, not declared.
+              {t("landing.hero.desc")}
               <br />
-              <span className="text-amber-300/80">Settlement by cryptographic proof. No whistle. No referee. Just code.</span>
+              <span className="text-amber-300/80">{t("landing.hero.sub")}</span>
             </motion.p>
 
             <motion.div
@@ -132,9 +136,9 @@ export default function Landing() {
               transition={{ duration: 0.8, delay: 1.1, ease: "easeOut" }}
               className="flex items-center gap-10 mt-12 relative"
             >
-              <Button onClick={() => navigate("/app")}>Launch dApp</Button>
+              <Button onClick={() => navigate("/app")}>{t("landing.hero.cta")}</Button>
               <a href="#how" className="text-lg text-white flex items-center gap-1.5 font-mono font-medium hover:text-amber-300 transition-colors drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-                <PlayIcon /> How It Works
+                <PlayIcon /> {t("landing.hero.how")}
               </a>
             </motion.div>
 
@@ -143,7 +147,7 @@ export default function Landing() {
               transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
               className="mt-14 text-sm text-white/70 font-mono tracking-wide relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
             >
-              TxODDS x Solana x Superteam Earn · Prediction Markets & Settlement · July 2026
+              {t("landing.hero.sponsor")}
             </motion.p>
           </div>
         </div>
@@ -160,11 +164,13 @@ export default function Landing() {
 
         <div className="relative z-10 px-8 md:px-16 lg:px-20 pt-24 pb-10 flex flex-col min-h-screen">
           <div className="mb-auto">
-            <p className="text-sm font-mono text-amber-300/80 mb-6">// HOW IT WORKS</p>
+            <p className="text-sm font-mono text-amber-300/80 mb-6">{t("landing.how.sub")}</p>
             <h2 className="font-mono text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-3px] font-bold">
-              Predict. Bet.
+              {t("landing.how.title1")}
               <br />
-              Claim.
+              {t("landing.how.title2")}
+              <br />
+              {t("landing.how.title3")}
             </h2>
           </div>
 
@@ -185,10 +191,10 @@ export default function Landing() {
                     <div className="flex-1" />
                     <div className="mt-6">
                       <h3 className="font-mono text-white text-3xl md:text-4xl tracking-[-1px] leading-none font-bold">
-                        {s.title}
+                        {i === 0 ? t("landing.how.title1card") : i === 1 ? t("landing.how.title2card") : i === 2 ? t("landing.how.title3card") : t("landing.how.title4card")}
                       </h3>
                       <p className="mt-3 text-sm text-white/70 font-mono leading-snug max-w-[32ch]">
-                        {s.desc}
+                        {i === 0 ? t("landing.how.desc1") : i === 1 ? t("landing.how.desc2") : i === 2 ? t("landing.how.desc3") : t("landing.how.desc4")}
                       </p>
                     </div>
                   </div>
@@ -211,11 +217,11 @@ export default function Landing() {
 
         <div className="relative z-10 px-8 md:px-16 lg:px-20 pt-24 pb-10 flex flex-col min-h-screen">
           <div className="mb-auto">
-            <p className="text-sm font-mono text-amber-300/80 mb-6">// WHY FULLTIME</p>
+            <p className="text-sm font-mono text-amber-300/80 mb-6">{t("landing.features.sub")}</p>
             <h2 className="font-mono text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-3px] font-bold">
-              On-Chain
+              {t("landing.features.title1")}
               <br />
-              Prediction
+              {t("landing.features.title2")}
             </h2>
           </div>
 
@@ -238,10 +244,10 @@ export default function Landing() {
                       </div>
                     )}
                     <h3 className="font-mono text-white text-3xl md:text-4xl tracking-[-1px] leading-none font-bold mt-auto">
-                      {f.title}
+                      {i === 0 ? t("landing.features.trustless") : i === 1 ? t("landing.features.automatic") : t("landing.features.fee")}
                     </h3>
                     <p className="mt-3 text-sm text-white/70 font-mono leading-snug">
-                      {f.desc}
+                      {i === 0 ? t("landing.features.trustlessDesc") : i === 1 ? t("landing.features.automaticDesc") : t("landing.features.feeDesc")}
                     </p>
                   </div>
                 </GlowCard>
@@ -256,10 +262,10 @@ export default function Landing() {
       {/* Footer */}
       <footer className="relative bg-black border-t border-emerald-500/10 px-8 py-8">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
-          <Button onClick={() => navigate("/app")}>Launch dApp</Button>
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-xs text-white/50 font-mono">FullTime — Built on Solana. Powered by TxLINE.</span>
-            <span className="text-xs text-white/40 font-mono">TxODDS x Solana x Superteam Earn Hackathon · {new Date().getFullYear()}</span>
+          <Button onClick={() => navigate("/app")}>{t("landing.hero.cta")}</Button>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs text-white/50 font-mono">{t("landing.footer.text")}</span>
+              <span className="text-xs text-white/40 font-mono">{t("landing.footer.sub")}</span>
           </div>
         </div>
       </footer>

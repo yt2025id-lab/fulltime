@@ -132,6 +132,34 @@ export default function MarketDetail() {
     );
 
   const options = ["YES", "NO"];
+  const [userBet, setUserBet] = useState<{ optionIndex: number; amount: number; claimed: boolean } | null>(null);
+  const [payoutPreview, setPayoutPreview] = useState<{ gross: number; fee: number; net: number } | null>(null);
+
+  // Load user's bet for this market
+  useEffect(() => {
+    if (!program || !wallet.publicKey || !market) return;
+    const load = async () => {
+      try {
+        const [betPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("bet"), new PublicKey(market.pda).toBytes(), wallet.publicKey!.toBytes()],
+          program.programId
+        );
+        const bet = await program.account.bet.fetch(betPda);
+        const amt = bet.amount.toNumber();
+        setUserBet({ optionIndex: bet.optionIndex, amount: amt, claimed: bet.claimed });
+        if (market.status === "settled" && bet.optionIndex === market.winningOption) {
+          const wp = market.winningOption === 0 ? Number(market.poolYes) : Number(market.poolNo);
+          const tp = Number(market.poolYes) + Number(market.poolNo);
+          if (wp > 0) {
+            const gross = Math.floor(amt * tp / wp);
+            const fee = Math.floor(gross * 200 / 10000);
+            setPayoutPreview({ gross, fee, net: gross - fee });
+          }
+        }
+      } catch { setUserBet(null); setPayoutPreview(null); }
+    };
+    load();
+  }, [program, wallet.publicKey, market]);
   const pools = [market.poolYes, market.poolNo];
   const maxPool = Math.max(...pools, 0.001);
 
@@ -249,18 +277,41 @@ export default function MarketDetail() {
           </div>
         )}
 
-        {/* Settled: claim button */}
-        {market.status === "settled" && wallet.publicKey && (
+        {/* Settled: show winner + user result */}
+        {market.status === "settled" && (
           <div className="border-4 border-black p-6 mb-6 shadow-[4px_4px_0px_#000] bg-[#00FFFF]/20">
             <h2 className="font-black text-lg mb-2">
               WINNER: {options[market.winningOption]}
             </h2>
-            <button
-              onClick={claimPayout}
-              className="w-full bg-[#FF1493] text-white py-3 border-2 border-black font-black text-lg shadow-[4px_4px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] transition-all mt-4"
-            >
-              CLAIM PAYOUT
-            </button>
+            {wallet.publicKey && userBet && (
+              <div className="mt-3 p-3 border-2 border-black bg-white">
+                {userBet.optionIndex === market.winningOption && !userBet.claimed ? (
+                  <>
+                    <p className="font-bold text-green-600">🎉 You Won!</p>
+                    <p className="text-sm text-gray-500 mt-1">Your bet: {options[userBet.optionIndex]} · {(userBet.amount / 1e9).toFixed(4)} SOL</p>
+                    {payoutPreview && (
+                      <p className="text-sm font-bold text-green-600 mt-1">
+                        Prize: {(payoutPreview.net / 1e9).toFixed(4)} SOL
+                        <span className="text-gray-400 font-normal ml-1">(fee 2%: -{(payoutPreview.fee / 1e9).toFixed(4)} SOL)</span>
+                      </p>
+                    )}
+                    <button
+                      onClick={claimPayout}
+                      className="w-full bg-[#FF1493] text-white py-3 border-2 border-black font-black text-lg shadow-[4px_4px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] transition-all mt-3"
+                    >
+                      CLAIM {(payoutPreview ? (payoutPreview.net / 1e9).toFixed(4) : '')} SOL
+                    </button>
+                  </>
+                ) : userBet.claimed ? (
+                  <p className="font-bold text-green-600">✅ Prize Claimed</p>
+                ) : (
+                  <p className="font-bold text-red-500">😔 You Lost — your {options[userBet.optionIndex]} bet lost</p>
+                )}
+              </div>
+            )}
+            {!wallet.publicKey && (
+              <p className="text-sm text-gray-500 mt-2">Connect wallet to check your result</p>
+            )}
           </div>
         )}
 

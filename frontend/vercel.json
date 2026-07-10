@@ -4,6 +4,7 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/api/txline/(.*)", "destination": "/api/txline-proxy?proxy=$1" },
+    { "source": "/api/football/(.*)", "destination": "/api/football-proxy?path=$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

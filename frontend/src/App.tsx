@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProviders } from "./context/FullTimeContext";
+import { LangProvider } from "./lib/i18n/context";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Matches from "./pages/Matches";
@@ -8,6 +9,7 @@ import Faucet from "./pages/Faucet";
 
 export default function App() {
   return (
+    <LangProvider>
     <AppProviders>
       <BrowserRouter>
         <Routes>
@@ -19,5 +21,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AppProviders>
+    </LangProvider>
   );
 }
