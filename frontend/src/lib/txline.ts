@@ -31,12 +31,9 @@ export interface TxLineScore {
   ts?: number;
 }
 
-// Hardcoded WC2026 QF fixtures (TxLINE devnet doesn't serve without API token)
+// Hardcoded WC2026 fixture (only Norway vs England — trustless market)
 const WC2026_FIXTURES: TxLineFixture[] = [
-  { FixtureId: 18209181, Participant1: "France", Participant2: "Morocco", Participant1IsHome: true, StartTime: "2026-07-09T20:00:00Z", Competition: "World Cup", CompetitionId: 72 },
-  { FixtureId: 18218149, Participant1: "Spain", Participant2: "Belgium", Participant1IsHome: true, StartTime: "2026-07-10T19:00:00Z", Competition: "World Cup", CompetitionId: 72 },
   { FixtureId: 18213979, Participant1: "Norway", Participant2: "England", Participant1IsHome: true, StartTime: "2026-07-11T21:00:00Z", Competition: "World Cup", CompetitionId: 72 },
-  { FixtureId: 18222446, Participant1: "Argentina", Participant2: "Switzerland", Participant1IsHome: true, StartTime: "2026-07-12T01:00:00Z", Competition: "World Cup", CompetitionId: 72 },
 ];
 
 export async function fetchFixtures(): Promise<TxLineFixture[]> {

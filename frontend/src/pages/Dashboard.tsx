@@ -102,8 +102,8 @@ export default function Dashboard() {
 
   const [fixtures, setFixtures] = useState<TxLineFixture[]>([]);
 
-  function isQfMarket(fixtureId: number): boolean {
-    return [18209181, 18218149, 18213979, 18222446].some(q => fixtureId >= q && fixtureId < q + 1_000_000);
+  function showMarket(fixtureId: number): boolean {
+    return fixtureId === 18213979;
   }
   const [showFixtures, setShowFixtures] = useState(true);
 
@@ -543,7 +543,7 @@ export default function Dashboard() {
           <h2 className="font-mono tracking-[-1px] text-white text-3xl tracking-[-1px]">Markets <span className="text-white/30 text-lg">({markets.filter(m => {
             if (m.status === "cancelled") return false;
             if (!m.isTrustless && m.status === "settled") return false;
-            if (!isQfMarket(m.fixtureId)) return false;
+            if (!showMarket(m.fixtureId)) return false;
             return true;
           }).length})</span></h2>
           <button onClick={reload} disabled={loading} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
@@ -564,7 +564,7 @@ export default function Dashboard() {
               return m.status === filter;
             }).filter(m => {
               if (!m.isTrustless && m.status === "settled") return false;
-              if (!isQfMarket(m.fixtureId)) return false;
+              if (!showMarket(m.fixtureId)) return false;
               return true;
             }).map((m, idx) => {
               const st = statusLabel(m.status);
