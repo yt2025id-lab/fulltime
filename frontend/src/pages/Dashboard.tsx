@@ -495,7 +495,7 @@ export default function Dashboard() {
                       <div className="relative flex flex-col gap-4">
                         <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
                           <div>
-                            <div className="font-semibold text-neutral-200 text-sm">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
+                            <div className="font-semibold text-neutral-200 text-sm"><span className="text-xl">{flagEmoji(home)}</span> {home} vs {away} <span className="text-xl">{flagEmoji(away)}</span></div>
                             <div className="text-[10px] text-neutral-500 font-mono mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
                           </div>
                         </div>
@@ -504,7 +504,7 @@ export default function Dashboard() {
                           <button
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
                             className={`flex-1 pr-3 text-left py-1 transition-all ${qt === "win" ? "bg-green-500/15" : "opacity-50 hover:opacity-100"}`}
-                          ><p className={`text-[10px] font-medium font-mono ${qt === "win" ? "text-green-300" : "text-neutral-500"}`}>Win</p><p className={`text-xs font-semibold ${qt === "win" ? "text-green-200" : "text-neutral-300"}`}>{flagEmoji(home)}</p></button>
+                          ><p className={`text-[10px] font-medium font-mono ${qt === "win" ? "text-green-300" : "text-neutral-500"}`}>Win</p><p className={`text-base font-semibold ${qt === "win" ? "text-green-200" : "text-neutral-300"}`}>{flagEmoji(home)}</p></button>
                           <button
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
                             className={`flex-1 px-3 text-center py-1 transition-all ${qt === "draw" ? "bg-yellow-500/15" : "opacity-50 hover:opacity-100"}`}
@@ -512,7 +512,7 @@ export default function Dashboard() {
                           <button
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))}
                             className={`flex-1 pl-3 text-right py-1 transition-all ${qt === "lose" ? "bg-red-500/15" : "opacity-50 hover:opacity-100"}`}
-                          ><p className={`text-[10px] font-medium font-mono ${qt === "lose" ? "text-red-300" : "text-neutral-500"}`}>Lose</p><p className={`text-xs font-semibold ${qt === "lose" ? "text-red-200" : "text-neutral-300"}`}>{flagEmoji(away)}</p></button>
+                          ><p className={`text-[10px] font-medium font-mono ${qt === "lose" ? "text-red-300" : "text-neutral-500"}`}>Lose</p><p className={`text-base font-semibold ${qt === "lose" ? "text-red-200" : "text-neutral-300"}`}>{flagEmoji(away)}</p></button>
                         </div>
                         {hasExisting && (
                           <p className="text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet</p>
@@ -657,7 +657,7 @@ export default function Dashboard() {
                           </svg>
                         </div>
                         <div>
-                          <p className="font-semibold text-neutral-200 text-sm">{fixture ? `${flagEmoji(home!)} ${fixture.Participant1} vs ${fixture.Participant2} ${flagEmoji(away!)}` : 'Custom Market'}</p>
+                           <p className="font-semibold text-neutral-200 text-sm">{fixture ? <><span className="text-xl">{flagEmoji(home!)}</span> {fixture.Participant1} vs {fixture.Participant2} <span className="text-xl">{flagEmoji(away!)}</span></> : 'Custom Market'}</p>
                           <p className="text-[10px] text-neutral-500 font-mono">#{m.fixtureId || idx + 1}{m.isTrustless && ' · Trustless'}{!m.isTrustless && ' · Manual'}</p>
                         </div>
                       </div>
