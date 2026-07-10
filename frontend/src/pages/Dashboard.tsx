@@ -500,19 +500,19 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <p className="text-sm text-neutral-200 font-medium leading-snug">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</p>
-                        <div className="flex divide-x divide-neutral-800">
+                        <div className="flex divide-x divide-neutral-800 rounded-lg overflow-hidden">
                           <button
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
-                            className={`flex-1 pr-3 text-left ${qt === "win" ? "" : "opacity-50 hover:opacity-100"} transition-opacity`}
-                          ><p className="text-[10px] font-medium text-neutral-500 font-mono">Win</p><p className={`text-xs font-semibold ${qt === "win" ? "text-green-400" : "text-neutral-300"}`}>{flagEmoji(home)}</p></button>
+                            className={`flex-1 pr-3 text-left py-1 transition-all ${qt === "win" ? "bg-green-500/15" : "opacity-50 hover:opacity-100"}`}
+                          ><p className={`text-[10px] font-medium font-mono ${qt === "win" ? "text-green-300" : "text-neutral-500"}`}>Win</p><p className={`text-xs font-semibold ${qt === "win" ? "text-green-200" : "text-neutral-300"}`}>{flagEmoji(home)}</p></button>
                           <button
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
-                            className={`flex-1 px-3 text-center ${qt === "draw" ? "" : "opacity-50 hover:opacity-100"} transition-opacity`}
-                          ><p className="text-[10px] font-medium text-neutral-500 font-mono">Draw</p><p className={`text-xs font-semibold ${qt === "draw" ? "text-yellow-400" : "text-neutral-300"}`}>⚖️</p></button>
+                            className={`flex-1 px-3 text-center py-1 transition-all ${qt === "draw" ? "bg-yellow-500/15" : "opacity-50 hover:opacity-100"}`}
+                          ><p className={`text-[10px] font-medium font-mono ${qt === "draw" ? "text-yellow-300" : "text-neutral-500"}`}>Draw</p><p className={`text-xs font-semibold ${qt === "draw" ? "text-yellow-200" : "text-neutral-300"}`}>⚖️</p></button>
                           <button
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))}
-                            className={`flex-1 pl-3 text-right ${qt === "lose" ? "" : "opacity-50 hover:opacity-100"} transition-opacity`}
-                          ><p className="text-[10px] font-medium text-neutral-500 font-mono">Lose</p><p className={`text-xs font-semibold ${qt === "lose" ? "text-red-400" : "text-neutral-300"}`}>{flagEmoji(away)}</p></button>
+                            className={`flex-1 pl-3 text-right py-1 transition-all ${qt === "lose" ? "bg-red-500/15" : "opacity-50 hover:opacity-100"}`}
+                          ><p className={`text-[10px] font-medium font-mono ${qt === "lose" ? "text-red-300" : "text-neutral-500"}`}>Lose</p><p className={`text-xs font-semibold ${qt === "lose" ? "text-red-200" : "text-neutral-300"}`}>{flagEmoji(away)}</p></button>
                         </div>
                         {hasExisting && (
                           <p className="text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet</p>
