@@ -7,7 +7,6 @@ import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Connection, clusterApiUrl } from "@solana/web3.js";
 import { fetchFixtures, type TxLineFixture } from "../lib/txline";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
-import GlowCard from "../components/GlowCard";
 import BN from "bn.js";
 
 const fadeIn = {
@@ -634,87 +633,98 @@ export default function Dashboard() {
               const away = fixture ? (fixture.Participant1IsHome ? fixture.Participant2 : fixture.Participant1) : null;
 
               return (
-                <GlowCard key={m.pubkey.toString()} className="!min-h-0">
-                  <div className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <span className="text-xs text-white/30 font-mono">#{m.fixtureId || idx + 1}</span>
-                      {m.isTrustless && <span className="ml-2 text-xs text-green-400 font-mono bg-green-400/10 rounded-full px-2 py-0.5 inline-flex items-center gap-0.5">⚡ TRUSTLESS</span>}
-                      {!m.isTrustless && <span className="ml-2 text-xs text-blue-400/60 font-mono bg-blue-400/10 rounded-full px-2 py-0.5">Manual</span>}
-                      {m.isTrustless && m.status === "settled" && m.settlementRoot && (
-                        <span className="ml-2 text-xs text-green-300/70 font-mono bg-green-500/5 rounded-full px-2 py-0.5 border border-green-500/10">TxLINE verified · {f(m.settlementRoot)}</span>
-                      )}
-                    </div>
-                    <span className={`text-xs font-mono font-semibold ${st.color}`}>{st.label}</span>
-                  </div>
-                  <p className="text-white font-mono font-medium text-sm mb-1">{m.question}</p>
-                  {home && away && (
-                    <p className="text-xs text-white/20 font-mono mb-1">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</p>
-                  )}
-                  <p className="text-xs text-white/30 font-mono mb-3">Deadline: {dt(m.closeTime)}</p>
-
-                  {!isCancelled && (
-                    <>
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        <div className="bg-green-500/10 rounded-xl p-2 text-center">
-                          <p className="text-xs text-green-300/80 font-mono">YES</p>
-                          <p className="text-sm text-green-300 font-mono font-semibold">{lamportsToSol(m.poolYes)} SOL</p>
+                <div key={m.pubkey.toString()} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
+                  <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+                  <div className="relative flex flex-col gap-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between border-b border-neutral-800 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-400/10">
+                          <svg className="h-5 w-5 text-red-400" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                            <path d="M12 14m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                            <path d="M14 4v4h-4" />
+                          </svg>
                         </div>
-                        <div className="bg-red-500/10 rounded-xl p-2 text-center">
-                          <p className="text-xs text-red-300/80 font-mono">NO</p>
-                          <p className="text-sm text-red-300 font-mono font-semibold">{lamportsToSol(m.poolNo)} SOL</p>
+                        <div>
+                          <p className="font-semibold text-neutral-200 text-sm">{fixture ? `${flagEmoji(home)} ${fixture.Participant1} vs ${fixture.Participant2} ${flagEmoji(away)}` : 'Custom Market'}</p>
+                          <p className="text-[10px] text-neutral-500 font-mono">#{m.fixtureId || idx + 1}{m.isTrustless && ' · Trustless'}{!m.isTrustless && ' · Manual'}</p>
                         </div>
                       </div>
-                      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-3">
-                        <div className="h-full bg-gradient-to-r from-red-400 to-red-500 rounded-full transition-all" style={{ width: `${yesPct}%` }} />
-                      </div>
-                      <p className="text-xs text-white/30 font-mono text-center mb-3">{yesPct}% YES</p>
-                    </>
-                  )}
-
-                  {myBet && (
-                    <div className="mb-3 p-2 rounded-xl bg-white/[0.03] border border-white/5">
-                      <p className="text-xs text-white/50 font-mono">Your bet: <span className={myBet.optionIndex === 0 ? "text-green-300" : "text-red-300"}>{myBet.optionIndex === 0 ? "YES" : "NO"} {lamportsToSol(myBet.amount)} SOL</span>
-                        {myBet.claimed && <span className="ml-1 text-red-400">(Claimed)</span>}
-                      </p>
-                      {isCancelled && !myBet.claimed && (
-                        <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="mt-2 w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-full py-1.5 text-xs font-mono font-semibold transition-colors">Refund</button>
-                      )}
-                      {m.status === "settled" && myBet.optionIndex === m.winningOption && !myBet.claimed && (
-                        <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="mt-2 w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-black rounded-full py-1.5 text-xs font-mono font-semibold transition-all">Claim Winnings</button>
-                      )}
+                      <span className={`text-[10px] font-mono font-semibold px-2 py-1 rounded-full ${st.color}`}>{st.label}</span>
                     </div>
-                  )}
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-2">
-                    {m.status === "open" && (
-                      <>
-                        {betMarket === m.pubkey.toString() ? (
-                          <div className="w-full flex gap-2">
-                            <input type="number" step="0.01" min="0.01" className="flex-1 bg-white/5 border border-white/10 rounded-full px-3 py-2 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
-                            <div className="flex gap-1">
-                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-full px-4 py-2 text-sm font-mono disabled:opacity-30 transition-colors ${myBet?.optionIndex === 0 ? 'bg-green-600/30 text-green-300 border border-green-500/30' : 'liquid-glass text-green-300'}`}>{myBet?.optionIndex === 0 ? 'BET YES ✓' : 'YES'}</button>
-                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-full px-4 py-2 text-sm font-mono disabled:opacity-30 transition-colors ${myBet?.optionIndex === 1 ? 'bg-red-600/30 text-red-300 border border-red-500/30' : 'liquid-glass text-red-300'}`}>{myBet?.optionIndex === 1 ? 'BET NO ✓' : 'NO'}</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button onClick={() => setBetMarket(m.pubkey.toString())} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white hover:text-red-300 transition-colors">Place Bet</button>
+                    {/* Question */}
+                    <p className="text-sm text-neutral-200 font-medium leading-snug">{m.question}</p>
+
+                    {/* Pools */}
+                    <div className="flex divide-x divide-neutral-800">
+                      <div className="flex-1 pr-3">
+                        <p className="text-[10px] font-medium text-neutral-500 font-mono">YES</p>
+                        <p className="text-base font-semibold text-green-400">{lamportsToSol(m.poolYes)} SOL</p>
+                      </div>
+                      <div className="flex-1 pl-3">
+                        <p className="text-[10px] font-medium text-neutral-500 font-mono">NO</p>
+                        <p className="text-base font-semibold text-red-400">{lamportsToSol(m.poolNo)} SOL</p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="relative h-6 w-full">
+                      <div className="h-full w-full rounded-full bg-neutral-800 overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-green-500 transition-all" style={{ width: `${yesPct}%` }} />
+                      </div>
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-white/70 font-semibold">{yesPct}% YES</span>
+                    </div>
+
+                    {/* Deadline */}
+                    <p className="text-[10px] font-mono text-neutral-500">Deadline: {dt(m.closeTime)}</p>
+
+                    {/* Your Bet */}
+                    {myBet && (
+                      <div className="border-t border-neutral-800 pt-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-neutral-400 font-mono">Your bet: <span className={myBet.optionIndex === 0 ? "text-green-400" : "text-red-400"}>{myBet.optionIndex === 0 ? "YES" : "NO"} {lamportsToSol(myBet.amount)} SOL</span>
+                            {myBet.claimed && <span className="ml-1 text-red-400">(Claimed)</span>}
+                          </p>
+                        </div>
+                        {isCancelled && !myBet.claimed && (
+                          <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950">Refund</button>
                         )}
-                      </>
+                        {m.status === "settled" && myBet.optionIndex === m.winningOption && !myBet.claimed && (
+                          <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950">Claim Winnings</button>
+                        )}
+                      </div>
                     )}
-                    {canOpen && <button onClick={() => openMarket(m.pubkey)} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-green-300 hover:text-green-200 transition-colors">Open Market</button>}
-                    {canClose && <button onClick={() => closeBetting(m.pubkey)} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-yellow-300 hover:text-yellow-200 transition-colors">Close Betting</button>}
-                    {canResolve && (
-                      <>
-                        <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-green-300 disabled:opacity-30">Resolve YES</button>
-                        <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-red-300 disabled:opacity-30">Resolve NO</button>
-                      </>
-                    )}
-                    {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-red-400 hover:text-red-300 transition-colors">🗑 Delete</button>}
+
+                    {/* Action Buttons */}
+                    <div className="border-t border-neutral-800 pt-3 flex flex-wrap gap-2">
+                      {m.status === "open" && (
+                        <>
+                          {betMarket === m.pubkey.toString() ? (
+                            <div className="w-full flex gap-2">
+                              <input type="number" step="0.01" min="0.01" className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
+                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 0 ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-green-500/50 bg-transparent text-green-400 hover:bg-green-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 0 ? '✓ BET YES' : 'YES'}</button>
+                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 1 ? '✓ BET NO' : 'NO'}</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => setBetMarket(m.pubkey.toString())} className="flex-1 rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950">Place Bet</button>
+                          )}
+                        </>
+                      )}
+                      {canOpen && <button onClick={() => openMarket(m.pubkey)} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950">Open Market</button>}
+                      {canClose && <button onClick={() => closeBetting(m.pubkey)} className="flex-1 rounded-lg border border-yellow-500/50 bg-transparent px-4 py-2 text-xs font-medium text-yellow-400 transition-colors duration-300 hover:bg-yellow-400 hover:text-neutral-950">Close Betting</button>}
+                      {canResolve && (
+                        <>
+                          <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950 disabled:opacity-30">Resolve YES</button>
+                          <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-red-500/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30">Resolve NO</button>
+                        </>
+                      )}
+                      {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-neutral-500 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 hover:border-red-400">🗑</button>}
+                    </div>
                   </div>
-                  </div>
-                </GlowCard>
+                </div>
               );
             })}
           </div>
