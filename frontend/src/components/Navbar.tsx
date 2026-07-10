@@ -1,16 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
-import {
-  WalletMultiButton,
-} from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletModalButton, WalletDisconnectButton } from "@solana/wallet-adapter-react-ui";
 
 export default function Navbar() {
   const { pathname } = useLocation();
+  const { connected } = useWallet();
 
   const links = [
     { to: "/markets", label: "Markets" },
     { to: "/portfolio", label: "Portfolio" },
     { to: "/admin", label: "Admin" },
   ];
+
+  const btnClass = "!bg-[#FFD700] !text-black !border-2 !border-black !shadow-[3px_3px_0px_#000] !rounded-none !font-bold !text-sm !py-1.5 !px-4 hover:!translate-x-[1px] hover:!translate-y-[1px] hover:!shadow-[1px_1px_0px_#000] !transition-all";
 
   return (
     <nav className="border-b-4 border-black bg-white sticky top-0 z-50">
@@ -36,7 +38,11 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <WalletMultiButton className="!bg-[#FFD700] !text-black !border-2 !border-black !shadow-[3px_3px_0px_#000] !rounded-none !font-bold !text-sm !py-1.5 !px-4 hover:!translate-x-[1px] hover:!translate-y-[1px] hover:!shadow-[1px_1px_0px_#000] !transition-all" />
+          {connected ? (
+            <WalletDisconnectButton className={btnClass} />
+          ) : (
+            <WalletModalButton className={btnClass} />
+          )}
         </div>
       </div>
     </nav>
