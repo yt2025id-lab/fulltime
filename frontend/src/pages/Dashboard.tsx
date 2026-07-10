@@ -438,9 +438,9 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center justify-end">
             {connected ? (
-              <WalletDisconnectButton className="!bg-white/10 hover:!bg-white/20 !text-white !rounded-full !px-4 !py-1.5 !text-xs !font-mono !h-auto !border-0 !transition-colors" />
+              <WalletDisconnectButton className="!bg-neutral-800 hover:!bg-neutral-700 !text-white !rounded-full !px-4 !py-1.5 !text-xs !font-mono !h-auto !border-0 !transition-colors" />
             ) : (
-              <WalletModalButton className="!bg-red-600 hover:!bg-red-500 !text-white !rounded-full !px-5 !py-2 !text-sm !font-semibold !font-mono !h-auto !transition-colors" />
+              <WalletModalButton className="!bg-neutral-900 hover:!bg-neutral-800 !text-white !rounded-full !px-5 !py-2 !text-sm !font-semibold !font-mono !h-auto !border !border-white/20 !transition-colors" />
             )}
           </div>
         </div>
