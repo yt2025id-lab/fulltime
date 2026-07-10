@@ -106,6 +106,7 @@ export default function Dashboard() {
     return fixtureId === 18218149;
   }
   const [showFixtures, setShowFixtures] = useState(true);
+  const [fixtureQType, setFixtureQType] = useState<Record<number, "win" | "draw">>({});
 
   const [betMarket, setBetMarket] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState("");
@@ -254,7 +255,7 @@ export default function Dashboard() {
 
   const reload = () => setTimeout(() => { loadMarkets(); loadBets(); }, 2000);
 
-  const createFixtureMarket = async (f: TxLineFixture) => {
+  const createFixtureMarket = async (f: TxLineFixture, qType?: "win" | "draw") => {
     if (!program || !publicKey) {
       setStatus({ type: "error", msg: "Wallet not connected or program not loaded" });
       return;
@@ -263,7 +264,9 @@ export default function Dashboard() {
     try {
       const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
       const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
-      const question = `Will ${home} beat ${away}?`;
+      const question = qType === "draw"
+        ? `Will ${home} vs ${away} end in a draw?`
+        : `Will ${home} beat ${away}?`;
       const nowTs = Math.floor(Date.now() / 1000);
       const openTime = nowTs + 300; // 5 min from now
       const matchTs = Math.floor(new Date(f.StartTime).getTime() / 1000);
@@ -275,7 +278,7 @@ export default function Dashboard() {
         .rpc({ commitment: "confirmed" });
       const mpda = marketPda(publicKey, f.FixtureId);
       await program.methods.openMarket().accounts({ market: mpda }).rpc({ commitment: "confirmed" });
-      setStatus({ type: "success", msg: `Market created & opened: ${home} vs ${away}` });
+      setStatus({ type: "success", msg: `Market created & opened: ${question}` });
       reload();
     } catch (e: any) {
       const msg = e.message || String(e);
@@ -473,33 +476,48 @@ export default function Dashboard() {
             <p className="font-mono text-xs text-white/30 mb-4">Create a trustless prediction market directly from these TxLINE fixtures — auto-settled via Merkle proof CPI.</p>
             {showFixtures && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
-                {fixtures.filter(f => {
-                  const fixtureId = f.FixtureId;
-                  return !markets.some(m => m.fixtureId === fixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
-                }).slice(0, 8).map(f => {
+                {fixtures.slice(0, 8).map(f => {
                   const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
                   const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
                   const d = f.StartTime ? new Date(f.StartTime) : new Date();
                   const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  const qt = fixtureQType[f.FixtureId] || "win";
+                  const existing = markets.filter(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
+                  const hasExisting = existing.length > 0;
                   return (
-                    <div key={f.FixtureId} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between hover:border-red-400/30 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-mono text-sm text-white font-semibold">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
-                        <div className="font-mono text-[10px] text-white/30 mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
+                    <div key={f.FixtureId} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 hover:border-red-400/30 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <div className="font-mono text-sm text-white font-semibold">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
+                          <div className="font-mono text-[10px] text-white/30 mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
+                        </div>
+                        <button
+                          onClick={() => createFixtureMarket(f, qt)}
+                          disabled={creating}
+                          className="shrink-0 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-full px-4 py-2 text-xs font-mono font-semibold transition-colors"
+                        >
+                          Create & Bet
+                        </button>
                       </div>
-                      <button
-                        onClick={() => createFixtureMarket(f)}
-                        disabled={creating}
-                        className="ml-3 shrink-0 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-full px-4 py-2 text-xs font-mono font-semibold transition-colors"
-                      >
-                        Create & Bet
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex bg-white/5 rounded-full overflow-hidden border border-white/10">
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "win" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Win</button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "draw" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Draw</button>
+                        </div>
+                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : `Will ${home} vs ${away} end in a draw?`}</span>
+                      </div>
+                      {hasExisting && (
+                        <p className="mt-2 text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet to create another</p>
+                      )}
                     </div>
                   );
                 })}
-                {fixtures.filter(f => !markets.some(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"))).length === 0 && (
-                  <p className="col-span-2 text-center font-mono text-xs text-white/20 py-4">All fixtures have markets created</p>
-                )}
               </div>
             )}
           </motion.div>
