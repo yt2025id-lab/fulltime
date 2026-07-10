@@ -9,75 +9,6 @@ import { fetchFixtures, type TxLineFixture } from "../lib/txline";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import BN from "bn.js";
 
-const cardStyles = `
-._card {
-  --white: hsl(0, 0%, 100%);
-  --black: hsl(240, 15%, 9%);
-  --paragraph: hsl(0, 0%, 83%);
-  --line: hsl(240, 9%, 17%);
-  --primary: hsl(266, 92%, 58%);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  width: 100%;
-  background-color: hsla(240, 15%, 9%, 1);
-  background-image: radial-gradient(at 88% 40%, hsla(240, 15%, 9%, 1) 0px, transparent 85%),
-    radial-gradient(at 49% 30%, hsla(240, 15%, 9%, 1) 0px, transparent 85%),
-    radial-gradient(at 14% 26%, hsla(240, 15%, 9%, 1) 0px, transparent 85%),
-    radial-gradient(at 0% 64%, hsla(263, 93%, 56%, 1) 0px, transparent 85%),
-    radial-gradient(at 41% 94%, hsla(284, 100%, 84%, 1) 0px, transparent 85%),
-    radial-gradient(at 100% 99%, hsla(306, 100%, 57%, 1) 0px, transparent 85%);
-  border-radius: 1rem;
-  box-shadow: 0px -16px 24px 0px rgba(255, 255, 255, 0.25) inset;
-}
-._card ._card__border {
-  overflow: hidden;
-  pointer-events: none;
-  position: absolute;
-  z-index: 0;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(100% + 2px);
-  height: calc(100% + 2px);
-  background-image: linear-gradient(0deg, hsl(0, 0%, 100%) -50%, hsl(0, 0%, 40%) 100%);
-  border-radius: 1rem;
-}
-._card ._card__border::before {
-  content: "";
-  pointer-events: none;
-  position: fixed;
-  z-index: 200;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(0deg);
-  transform-origin: left;
-  width: 200%;
-  height: 10rem;
-  background-image: linear-gradient(0deg, hsla(0, 0%, 100%, 0) 0%, hsl(277, 95%, 60%) 40%, hsl(277, 95%, 60%) 60%, hsla(0, 0%, 40%, 0) 100%);
-  animation: _rotate 8s linear infinite;
-}
-@keyframes _rotate { to { transform: translate(-50%, -50%) rotate(360deg); } }
-._card > * { position: relative; z-index: 1; }
-._card ._card_title { font-size: 1rem; color: var(--white); }
-._card ._card_paragraph { margin-top: 0.25rem; width: 65%; font-size: 0.5rem; color: var(--paragraph); }
-._card ._line { width: 100%; height: 0.1rem; background-color: var(--line); border: none; margin: 0; }
-._card ._card__list { display: flex; flex-direction: column; gap: 0.5rem; }
-._card ._card__list ._card__list_item { display: flex; align-items: center; gap: 0.5rem; }
-._card ._card__list ._card__list_item ._check { display: flex; justify-content: center; align-items: center; width: 1rem; height: 1rem; background-color: var(--primary); border-radius: 50%; flex-shrink: 0; }
-._card ._card__list ._card__list_item ._check ._check_svg { width: 0.75rem; height: 0.75rem; fill: var(--black); }
-._card ._card__list ._card__list_item ._list_text { font-size: 0.75rem; color: var(--white); }
-._card ._button { cursor: pointer; padding: 0.5rem; width: 100%; background-image: linear-gradient(0deg, rgba(94, 58, 238, 1) 0%, rgba(197, 107, 240, 1) 100%); font-size: 0.75rem; color: var(--white); border: 0; border-radius: 9999px; box-shadow: inset 0 -2px 25px -4px var(--white); }
-._card ._button:hover { opacity: 0.9; }
-._card ._button:disabled { opacity: 0.4; cursor: default; }
-._fixture-toggle { display: flex; gap: 0.25rem; }
-._fixture-toggle button { cursor: pointer; padding: 0.25rem 0.75rem; font-size: 0.65rem; background-color: var(--black); color: var(--paragraph); border: 2px solid var(--black); border-radius: 0.25rem; transition: all 0.3s ease-in-out; }
-._fixture-toggle button:hover { border: 2px solid var(--white); }
-._fixture-toggle button.active { background-color: var(--primary); border: 2px solid hsl(266, 92%, 30%); box-shadow: inset 0px 1px 4px hsl(266, 92%, 30%); color: var(--white); }
-`;
-
 const fadeIn = {
   initial: { filter: "blur(8px)", opacity: 0, y: 20 },
   animate: { filter: "blur(0px)", opacity: 1, y: 0 },
@@ -488,7 +419,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-green-950 relative">
-      <style>{cardStyles}</style>
       <div className="fixed inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1920&q=80)` }}>
         <div className="absolute inset-0 bg-green-950/75 backdrop-blur-[2px]" />
       </div>
@@ -560,28 +490,40 @@ export default function Dashboard() {
                   const existing = markets.filter(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
                   const hasExisting = existing.length > 0;
                   return (
-                    <div key={f.FixtureId} className="_card">
-                      <div className="_card__border"></div>
-                      <div className="_card_title">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
-                      <p className="_card_paragraph">#{f.FixtureId} · {dateStr} · Trustless</p>
-                      <hr className="_line" />
-                      <div className="_card__list">
-                        <div className="_card__list_item">
-                          <div className="_check"><svg className="_check_svg" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-                          <span className="_list_text">Question: {qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</span>
+                    <div key={f.FixtureId} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 hover:border-red-400/30 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <div className="font-mono text-sm text-white font-semibold">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
+                          <div className="font-mono text-[10px] text-white/30 mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
                         </div>
-                        <div className="_card__list_item">
-                          <div className="_check"><svg className="_check_svg" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-                          <span className="_list_text">Auto-settled via TxLINE</span>
+                        <button
+                          onClick={() => createFixtureMarket(f, qt)}
+                          disabled={creating}
+                          className="shrink-0 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-full px-4 py-2 text-xs font-mono font-semibold transition-colors"
+                        >
+                          Create & Bet
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex bg-white/5 rounded-full overflow-hidden border border-white/10">
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "win" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Win</button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "draw" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Draw</button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "lose" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Lose</button>
                         </div>
+                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</span>
                       </div>
-                      <div className="_fixture-toggle">
-                        <button onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))} className={qt === "win" ? "active" : ""}>Win</button>
-                        <button onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))} className={qt === "draw" ? "active" : ""}>Draw</button>
-                        <button onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))} className={qt === "lose" ? "active" : ""}>Lose</button>
-                      </div>
-                      {hasExisting && <p className="text-[10px] text-yellow-400/60">Market exists · switch wallet</p>}
-                      <button onClick={() => createFixtureMarket(f, qt)} disabled={creating} className="_button">Create & Bet</button>
+                      {hasExisting && (
+                        <p className="mt-2 text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet to create another</p>
+                      )}
                     </div>
                   );
                 })}
@@ -617,17 +559,17 @@ export default function Dashboard() {
         {/* Custom Market */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
-            <div className="_card max-w-md mx-auto">
-              <div className="_card__border"></div>
-              <div className="_card_title">Custom Market</div>
-              <p className="_card_paragraph" style={{width:'100%'}}>Create a manual YES/NO market for any question. You resolve the outcome.</p>
-              <hr className="_line" />
-              <div className="flex flex-col gap-2">
-                <input className="w-full bg-[var(--black)] border-2 border-[var(--black)] rounded px-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[var(--primary)] transition-colors" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
-                <input className="w-full bg-[var(--black)] border-2 border-[var(--black)] rounded px-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[var(--primary)] transition-colors" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
+            <h2 className="font-mono tracking-[-1px] text-white text-2xl tracking-[-1px] mb-4">Custom Market</h2>
+            <p className="font-mono text-xs text-white/30 mb-3">Create a manual YES/NO market for any question. You resolve the outcome.</p>
+            <div className="space-y-3">
+              <input className="w-full bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50 transition-all" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
               </div>
-              <p className="text-xs text-[var(--paragraph)]">Fee: <span className="text-[var(--primary)] font-medium">2%</span></p>
-              <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="_button">{creating ? "Creating..." : "Create Market"}</button>
+              <div className="flex items-center gap-4">
+                <div className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60">Fee: <span className="text-red-300 font-medium">2%</span></div>
+              </div>
+              <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-black rounded-full px-5 py-3 text-sm font-semibold font-mono disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/20">{creating ? "Creating..." : "Create Market"}</button>
             </div>
           </motion.div>
         )}
@@ -694,72 +636,96 @@ export default function Dashboard() {
               const away = fixture ? (fixture.Participant1IsHome ? fixture.Participant2 : fixture.Participant1) : null;
 
               return (
-                <div key={m.pubkey.toString()} className="_card">
-                  <div className="_card__border"></div>
-                  <div className="flex items-start justify-between">
-                    <div className="_card_title">{m.question}</div>
-                    <span className={`text-[10px] font-mono font-semibold px-2 py-1 rounded-full shrink-0 ${st.color}`}>{st.label}</span>
-                  </div>
-                  <p className="_card_paragraph" style={{ width: '100%' }}>#{m.fixtureId || idx + 1}{m.isTrustless && ' · Trustless'}{!m.isTrustless && ' · Manual'}{fixture ? ` · ${flagEmoji(home!)} ${fixture.Participant1} vs ${fixture.Participant2} ${flagEmoji(away!)}` : ''}</p>
-                  <hr className="_line" />
-                  <div className="_card__list">
-                    <div className="_card__list_item">
-                      <div className="_check"><svg className="_check_svg" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-                      <span className="_list_text">YES: {lamportsToSol(m.poolYes)} SOL</span>
-                    </div>
-                    <div className="_card__list_item">
-                      <div className="_check"><svg className="_check_svg" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-                      <span className="_list_text">NO: {lamportsToSol(m.poolNo)} SOL</span>
-                    </div>
-                    <div className="_card__list_item">
-                      <div className="_check"><svg className="_check_svg" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-                      <span className="_list_text">Deadline: {dt(m.closeTime)}</span>
-                    </div>
-                  </div>
-                  <div className="relative h-2 w-full rounded-full bg-[var(--line)] overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-green-500 transition-all" style={{ width: `${yesPct}%` }} />
-                  </div>
-                  <p className="text-[10px] text-center text-[var(--paragraph)]">{yesPct}% YES</p>
-
-                  {myBet && (
-                    <>
-                      <hr className="_line" />
-                      <div className="_card__list_item">
-                        <span className="_list_text">Your bet: <span className={myBet.optionIndex === 0 ? "text-green-400" : "text-red-400"}>{myBet.optionIndex === 0 ? "YES" : "NO"} {lamportsToSol(myBet.amount)} SOL</span>{myBet.claimed && <span className="ml-1 text-red-400">(Claimed)</span>}</span>
+                <div key={m.pubkey.toString()} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
+                  <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+                  <div className="relative flex flex-col gap-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between border-b border-neutral-800 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-400/10">
+                          <svg className="h-5 w-5 text-red-400" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                            <path d="M12 14m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                            <path d="M14 4v4h-4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-neutral-200 text-sm">{fixture ? `${flagEmoji(home!)} ${fixture.Participant1} vs ${fixture.Participant2} ${flagEmoji(away!)}` : 'Custom Market'}</p>
+                          <p className="text-[10px] text-neutral-500 font-mono">#{m.fixtureId || idx + 1}{m.isTrustless && ' · Trustless'}{!m.isTrustless && ' · Manual'}</p>
+                        </div>
                       </div>
-                      {isCancelled && !myBet.claimed && (
-                        <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="_button !bg-gradient-to-r from-red-600 to-red-500">Refund</button>
-                      )}
-                      {m.status === "settled" && myBet.optionIndex === m.winningOption && !myBet.claimed && (
-                        <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="_button !bg-gradient-to-r from-green-600 to-green-500">Claim Winnings</button>
-                      )}
-                    </>
-                  )}
+                      <span className={`text-[10px] font-mono font-semibold px-2 py-1 rounded-full ${st.color}`}>{st.label}</span>
+                    </div>
 
-                  <hr className="_line" />
-                  <div className="flex flex-wrap gap-2">
-                    {m.status === "open" && (
-                      <>
-                        {betMarket === m.pubkey.toString() ? (
-                          <div className="w-full flex gap-2">
-                            <input type="number" step="0.01" min="0.01" className="flex-1 bg-[var(--black)] border border-[var(--line)] rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-white/30 focus:outline-none focus:border-[var(--primary)]" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
-                            <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`_button ${myBet?.optionIndex === 0 ? '!bg-gradient-to-r from-green-600 to-green-500' : ''}`} style={!myBet || myBet.optionIndex !== 0 ? {backgroundImage: 'linear-gradient(0deg, rgba(34,197,94,0.5) 0%, rgba(34,197,94,0.3) 100%)'} : {}}>{myBet?.optionIndex === 0 ? '✓ YES' : 'YES'}</button>
-                            <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`_button ${myBet?.optionIndex === 1 ? '!bg-gradient-to-r from-red-600 to-red-500' : ''}`} style={!myBet || myBet.optionIndex !== 1 ? {backgroundImage: 'linear-gradient(0deg, rgba(239,68,68,0.5) 0%, rgba(239,68,68,0.3) 100%)'} : {}}>{myBet?.optionIndex === 1 ? '✓ NO' : 'NO'}</button>
-                          </div>
-                        ) : (
-                          <button onClick={() => setBetMarket(m.pubkey.toString())} className="_button">Place Bet</button>
+                    {/* Question */}
+                    <p className="text-sm text-neutral-200 font-medium leading-snug">{m.question}</p>
+
+                    {/* Pools */}
+                    <div className="flex divide-x divide-neutral-800">
+                      <div className="flex-1 pr-3">
+                        <p className="text-[10px] font-medium text-neutral-500 font-mono">YES</p>
+                        <p className="text-base font-semibold text-green-400">{lamportsToSol(m.poolYes)} SOL</p>
+                      </div>
+                      <div className="flex-1 pl-3">
+                        <p className="text-[10px] font-medium text-neutral-500 font-mono">NO</p>
+                        <p className="text-base font-semibold text-red-400">{lamportsToSol(m.poolNo)} SOL</p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="relative h-6 w-full">
+                      <div className="h-full w-full rounded-full bg-neutral-800 overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-green-500 transition-all" style={{ width: `${yesPct}%` }} />
+                      </div>
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-white/70 font-semibold">{yesPct}% YES</span>
+                    </div>
+
+                    {/* Deadline */}
+                    <p className="text-[10px] font-mono text-neutral-500">Deadline: {dt(m.closeTime)}</p>
+
+                    {/* Your Bet */}
+                    {myBet && (
+                      <div className="border-t border-neutral-800 pt-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-neutral-400 font-mono">Your bet: <span className={myBet.optionIndex === 0 ? "text-green-400" : "text-red-400"}>{myBet.optionIndex === 0 ? "YES" : "NO"} {lamportsToSol(myBet.amount)} SOL</span>
+                            {myBet.claimed && <span className="ml-1 text-red-400">(Claimed)</span>}
+                          </p>
+                        </div>
+                        {isCancelled && !myBet.claimed && (
+                          <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950">Refund</button>
                         )}
-                      </>
+                        {m.status === "settled" && myBet.optionIndex === m.winningOption && !myBet.claimed && (
+                          <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950">Claim Winnings</button>
+                        )}
+                      </div>
                     )}
-                    {canOpen && <button onClick={() => openMarket(m.pubkey)} className="_button" style={{backgroundImage: 'linear-gradient(0deg, rgba(34,197,94,0.5) 0%, rgba(34,197,94,0.3) 100%)'}}>Open Market</button>}
-                    {canClose && <button onClick={() => closeBetting(m.pubkey)} className="_button" style={{backgroundImage: 'linear-gradient(0deg, rgba(234,179,8,0.5) 0%, rgba(234,179,8,0.3) 100%)'}}>Close</button>}
-                    {canResolve && (
-                      <>
-                        <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="_button" style={{backgroundImage: 'linear-gradient(0deg, rgba(34,197,94,0.5) 0%, rgba(34,197,94,0.3) 100%)'}}>Resolve YES</button>
-                        <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="_button" style={{backgroundImage: 'linear-gradient(0deg, rgba(239,68,68,0.5) 0%, rgba(239,68,68,0.3) 100%)'}}>Resolve NO</button>
-                      </>
-                    )}
-                    {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="_button" style={{backgroundImage: 'linear-gradient(0deg, rgba(100,100,100,0.5) 0%, rgba(100,100,100,0.3) 100%)'}}>🗑</button>}
+
+                    {/* Action Buttons */}
+                    <div className="border-t border-neutral-800 pt-3 flex flex-wrap gap-2">
+                      {m.status === "open" && (
+                        <>
+                          {betMarket === m.pubkey.toString() ? (
+                            <div className="w-full flex gap-2">
+                              <input type="number" step="0.01" min="0.01" className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
+                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 0 ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-green-500/50 bg-transparent text-green-400 hover:bg-green-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 0 ? '✓ BET YES' : 'YES'}</button>
+                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 1 ? '✓ BET NO' : 'NO'}</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => setBetMarket(m.pubkey.toString())} className="flex-1 rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950">Place Bet</button>
+                          )}
+                        </>
+                      )}
+                      {canOpen && <button onClick={() => openMarket(m.pubkey)} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950">Open Market</button>}
+                      {canClose && <button onClick={() => closeBetting(m.pubkey)} className="flex-1 rounded-lg border border-yellow-500/50 bg-transparent px-4 py-2 text-xs font-medium text-yellow-400 transition-colors duration-300 hover:bg-yellow-400 hover:text-neutral-950">Close Betting</button>}
+                      {canResolve && (
+                        <>
+                          <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950 disabled:opacity-30">Resolve YES</button>
+                          <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-red-500/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30">Resolve NO</button>
+                        </>
+                      )}
+                      {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-neutral-500 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 hover:border-red-400">🗑</button>}
+                    </div>
                   </div>
                 </div>
               );
