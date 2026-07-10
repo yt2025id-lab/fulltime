@@ -221,7 +221,7 @@ export default function Dashboard() {
         const readU64 = (o: number) => Number(new DataView(data.buffer.slice(data.byteOffset + o, data.byteOffset + o + 8)).getBigUint64(0, true));
         const readU8 = (o: number) => data[o];
         return {
-          market: new PublicKey(data.slice(40, 72)).toString(),
+          market: new PublicKey(data.slice(8, 40)).toString(),
           optionIndex: readU8(72),
           amount: readU64(73),
           claimed: readU8(81) === 1,
