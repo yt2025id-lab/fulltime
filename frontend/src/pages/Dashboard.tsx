@@ -490,40 +490,39 @@ export default function Dashboard() {
                   const existing = markets.filter(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
                   const hasExisting = existing.length > 0;
                   return (
-                    <div key={f.FixtureId} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 hover:border-red-400/30 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <div className="font-mono text-sm text-white font-semibold">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
-                          <div className="font-mono text-[10px] text-white/30 mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
+                    <div key={f.FixtureId} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
+                      <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+                      <div className="relative flex flex-col gap-4">
+                        <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+                          <div>
+                            <div className="font-semibold text-neutral-200 text-sm">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
+                            <div className="text-[10px] text-neutral-500 font-mono mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
+                          </div>
                         </div>
+                        <p className="text-sm text-neutral-200 font-medium leading-snug">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</p>
+                        <div className="flex divide-x divide-neutral-800">
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
+                            className={`flex-1 pr-3 text-left ${qt === "win" ? "" : "opacity-50 hover:opacity-100"} transition-opacity`}
+                          ><p className="text-[10px] font-medium text-neutral-500 font-mono">Win</p><p className={`text-xs font-semibold ${qt === "win" ? "text-green-400" : "text-neutral-300"}`}>{flagEmoji(home)}</p></button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
+                            className={`flex-1 px-3 text-center ${qt === "draw" ? "" : "opacity-50 hover:opacity-100"} transition-opacity`}
+                          ><p className="text-[10px] font-medium text-neutral-500 font-mono">Draw</p><p className={`text-xs font-semibold ${qt === "draw" ? "text-yellow-400" : "text-neutral-300"}`}>⚖️</p></button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))}
+                            className={`flex-1 pl-3 text-right ${qt === "lose" ? "" : "opacity-50 hover:opacity-100"} transition-opacity`}
+                          ><p className="text-[10px] font-medium text-neutral-500 font-mono">Lose</p><p className={`text-xs font-semibold ${qt === "lose" ? "text-red-400" : "text-neutral-300"}`}>{flagEmoji(away)}</p></button>
+                        </div>
+                        {hasExisting && (
+                          <p className="text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet</p>
+                        )}
                         <button
                           onClick={() => createFixtureMarket(f, qt)}
                           disabled={creating}
-                          className="shrink-0 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-full px-4 py-2 text-xs font-mono font-semibold transition-colors"
-                        >
-                          Create & Bet
-                        </button>
+                          className="rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30"
+                        >Create & Bet</button>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex bg-white/5 rounded-full overflow-hidden border border-white/10">
-                          <button
-                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
-                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "win" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
-                          >Win</button>
-                          <button
-                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
-                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "draw" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
-                          >Draw</button>
-                          <button
-                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))}
-                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "lose" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
-                          >Lose</button>
-                        </div>
-                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</span>
-                      </div>
-                      {hasExisting && (
-                        <p className="mt-2 text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet to create another</p>
-                      )}
                     </div>
                   );
                 })}
@@ -535,38 +534,48 @@ export default function Dashboard() {
         {/* Wallet Card */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-mono text-xs text-white/30 mb-1">{wallet?.adapter?.name || "Wallet"}</p>
-                <p className="font-mono font-semibold text-white">{publicKey?.toBase58().slice(0, 8)}...{publicKey?.toBase58().slice(-6)}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-mono text-xs text-white/30 mb-1">Balance</p>
-                <p className="font-mono font-semibold text-green-300">◎ {balance !== null ? (balance / 1e9).toFixed(3) : "..."} SOL</p>
+            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
+              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+              <div className="relative flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+                  <div>
+                    <p className="text-[10px] font-medium text-neutral-500 font-mono">{wallet?.adapter?.name || "Wallet"}</p>
+                    <p className="font-semibold text-neutral-200 text-sm">{publicKey?.toBase58().slice(0, 8)}...{publicKey?.toBase58().slice(-6)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-medium text-neutral-500 font-mono">Balance</p>
+                    <p className="text-base font-semibold text-green-300">◎ {balance !== null ? (balance / 1e9).toFixed(3) : "..."} SOL</p>
+                  </div>
+                </div>
+                {(balance !== null && balance < 0.5 * 1e9) && (
+                  <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <p className="text-xs font-mono text-yellow-300/70 text-center">Low balance — use <Link to="/faucet" className="underline text-yellow-300">Faucet</Link> to get test SOL</p>
+                  </div>
+                )}
               </div>
             </div>
-            {(balance !== null && balance < 0.5 * 1e9) && (
-              <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                <p className="text-xs font-mono text-yellow-300/70 text-center">Low balance — use <Link to="/faucet" className="underline text-yellow-300">Faucet</Link> to get test SOL</p>
-              </div>
-            )}
           </motion.div>
         )}
 
         {/* Custom Market */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
-            <h2 className="font-mono tracking-[-1px] text-white text-2xl tracking-[-1px] mb-4">Custom Market</h2>
-            <p className="font-mono text-xs text-white/30 mb-3">Create a manual YES/NO market for any question. You resolve the outcome.</p>
-            <div className="space-y-3">
-              <input className="w-full bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50 transition-all" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
+            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50 max-w-md mx-auto">
+              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
+              <div className="relative flex flex-col gap-4">
+                <div className="border-b border-neutral-800 pb-4">
+                  <p className="font-semibold text-neutral-200 text-sm">Custom Market</p>
+                  <p className="text-[10px] text-neutral-500 font-mono mt-1">Create a manual YES/NO market for any question. You resolve the outcome.</p>
+                </div>
+                <input className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="text-[10px] font-mono text-neutral-500">Fee: <span className="text-red-400 font-medium">2%</span></p>
+                </div>
+                <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30">{creating ? "Creating..." : "Create Market"}</button>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60">Fee: <span className="text-red-300 font-medium">2%</span></div>
-              </div>
-              <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-black rounded-full px-5 py-3 text-sm font-semibold font-mono disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/20">{creating ? "Creating..." : "Create Market"}</button>
             </div>
           </motion.div>
         )}
