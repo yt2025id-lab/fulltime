@@ -243,8 +243,8 @@ export default function Dashboard() {
       const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
       const question = `Will ${home} beat ${away}?`;
       const nowTs = Math.floor(Date.now() / 1000);
-      const openTime = nowTs + 10;
-      const closeTime = openTime + 86400;
+      const openTime = nowTs + 300; // 5 min from now
+      const closeTime = openTime + 172800; // 2 days after open
       mark("Creating market...");
       await program.methods
         .createMarket(new BN(f.FixtureId), question, new BN(openTime), new BN(closeTime), true)
