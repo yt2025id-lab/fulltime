@@ -418,10 +418,7 @@ export default function Dashboard() {
   const dt = (ts: number) => new Date(ts * 1000).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="min-h-screen bg-green-950 relative">
-      <div className="fixed inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1920&q=80)` }}>
-        <div className="absolute inset-0 bg-green-950/75 backdrop-blur-[2px]" />
-      </div>
+    <div className="min-h-screen bg-neutral-950 relative">
 
       <nav className="sticky top-0 z-40 border-b border-white/5 bg-neutral-950/95 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
@@ -458,16 +455,24 @@ export default function Dashboard() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <motion.div {...fadeIn} transition={{ duration: 0.8, ease: "easeOut" }} className="text-center mb-10">
-          <p className="text-sm font-mono text-red-300/60 mb-4">// Dashboard</p>
-          <h1 className="font-mono tracking-[-1px] text-white text-5xl md:text-6xl lg:text-[5rem] leading-[0.9] tracking-[-3px]">
-            World Cup<br /><span className="text-red-300">Prediction</span>
+          <p className="text-sm font-mono text-neutral-500 mb-4">// dashboard</p>
+          <h1 className="font-heading text-white text-5xl md:text-6xl lg:text-[5rem] leading-[0.9] tracking-[-3px]">
+            World Cup<br /><span className="text-red-300 italic">Prediction</span>
           </h1>
-          <p className="text-xs text-white/40 font-mono mt-2">{markets.filter(m => m.status !== "cancelled" && showMarket(m.fixtureId)).length} markets</p>
+          <p className="text-sm text-neutral-400 font-mono mt-4 max-w-md mx-auto leading-relaxed">
+            Trustless prediction markets powered by TxLINE and Solana.
+          </p>
+          <p className="text-xs text-white/20 font-mono mt-2">{markets.filter(m => m.status !== "cancelled" && showMarket(m.fixtureId)).length} markets</p>
+          {!connected && (
+            <div className="mt-6">
+              <WalletModalButton style={{ background: "#ef4444", color: "#fff", borderRadius: "9999px", padding: "12px 32px", fontSize: "14px", fontFamily: "ui-monospace, monospace", fontWeight: 600, border: "none", cursor: "pointer" }} />
+            </div>
+          )}
         </motion.div>
 
         {/* World Cup 2026 Fixtures — Auto-Create Markets */}
         {connected && fixtures.length > 0 && (
-          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
+          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-mono tracking-[-1px] text-white text-2xl">World Cup 2026 Fixtures</h2>
               <button onClick={() => setShowFixtures(!showFixtures)} className="text-xs font-mono text-white/40 hover:text-white transition-colors">{showFixtures ? "Hide" : "Show"}</button>
@@ -527,7 +532,7 @@ export default function Dashboard() {
 
         {/* Wallet Card */}
         {connected && (
-          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
+          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8">
             <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
               <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
               <div className="relative flex flex-col gap-4">
@@ -553,7 +558,7 @@ export default function Dashboard() {
 
         {/* Custom Market */}
         {connected && (
-          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
+          <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8">
             <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-950 p-5 font-sans shadow-2xl border border-neutral-800/50">
               <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl transition-all duration-700 group-hover:bg-red-500/15"></div>
               <div className="relative flex flex-col gap-4">
@@ -566,7 +571,7 @@ export default function Dashboard() {
                   <input className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
                 </div>
                 <div className="flex items-center gap-4">
-                  <p className="text-[10px] font-mono text-neutral-500">Fee: <span className="text-red-400 font-medium">2%</span></p>
+                  <p className="text-[10px] font-mono text-neutral-500">Fee: <span className="text-neutral-300 font-medium">2%</span></p>
                 </div>
                 <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30">{creating ? "Creating..." : "Create Market"}</button>
               </div>
@@ -582,7 +587,7 @@ export default function Dashboard() {
               onClick={() => setFilter(f)}
               className={`font-mono text-xs font-semibold uppercase px-4 py-1.5 rounded-full transition-all ${
                 filter === f
-                  ? "bg-red-500 text-black"
+                  ? "bg-neutral-800 text-white"
                   : "bg-white/[0.05] text-white/40 hover:text-white"
               }`}
             >
@@ -738,7 +743,7 @@ export default function Dashboard() {
           <div className="fixed inset-0 z-50 flex" onClick={() => setShowPortfolio(false)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="ml-auto w-full max-w-md h-full bg-[#111] border-l border-white/10 overflow-y-auto" onClick={e => e.stopPropagation()}>
+              className="ml-auto w-full max-w-md h-full bg-neutral-950 border-l border-neutral-800 overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-mono font-bold text-white text-xl">Portfolio</h2>
