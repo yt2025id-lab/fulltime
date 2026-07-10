@@ -99,7 +99,7 @@ export default function MarketDetail() {
     setTxStatus("Claiming payout...");
 
     const [betPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("bet"), new PublicKey(market.pda).toBuffer(), wallet.publicKey.toBuffer()],
+      [Buffer.from("bet"), new PublicKey(market.pda).toBytes(), wallet.publicKey.toBytes()],
       program.programId
     );
 

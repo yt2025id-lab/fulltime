@@ -77,7 +77,7 @@ function marketPda(creator: PublicKey, fixtureId: number): PublicKey {
   const buf = Buffer.alloc(8);
   buf.writeBigUInt64LE(BigInt(fixtureId));
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("market"), new PublicKey(FULLTIME_ID).toBuffer(), creator.toBuffer(), buf],
+    [Buffer.from("market"), new PublicKey(FULLTIME_ID).toBytes(), creator.toBytes(), buf],
     new PublicKey(FULLTIME_ID)
   );
   return pda;
@@ -317,7 +317,7 @@ export default function Dashboard() {
       mark("Placing bet...");
       const amount = Math.floor(parseFloat(betAmount) * 1e9);
       const betPda = PublicKey.findProgramAddressSync(
-        [Buffer.from("bet"), marketPk.toBuffer(), publicKey.toBuffer()],
+        [Buffer.from("bet"), marketPk.toBytes(), publicKey.toBytes()],
         new PublicKey(FULLTIME_ID)
       )[0];
       await program.methods.placeBet(optionIndex, new BN(amount))

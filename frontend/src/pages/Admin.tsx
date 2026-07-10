@@ -46,8 +46,8 @@ export default function Admin() {
     const [pda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("market"),
-        new PublicKey(FULLTIME_ID).toBuffer(),
-        creatorPk.toBuffer(),
+        new PublicKey(FULLTIME_ID).toBytes(),
+        creatorPk.toBytes(),
         new BN(fixtureId).toArrayLike(Buffer, "le", 8),
       ],
       new PublicKey(FULLTIME_ID)
