@@ -437,7 +437,7 @@ export default function Dashboard() {
           <h1 className="font-mono tracking-[-1px] text-white text-5xl md:text-6xl lg:text-[5rem] leading-[0.9] tracking-[-3px]">
             World Cup<br /><span className="text-red-300">Prediction</span>
           </h1>
-          <p className="text-xs text-white/40 font-mono mt-2">{markets.length} markets</p>
+          <p className="text-xs text-white/40 font-mono mt-2">{markets.filter(m => m.status !== "cancelled" && showMarket(m.fixtureId)).length} markets</p>
         </motion.div>
 
         {/* World Cup 2026 Fixtures — Auto-Create Markets */}

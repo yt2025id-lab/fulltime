@@ -13,17 +13,8 @@ const connection = new Connection(RPC, "confirmed");
 // 4 QF fixtures
 const QF = [18209181, 18218149, 18213979, 18222446];
 
-// 8 QF teams (lowercase)
-const QF_TEAMS = [
-  "france", "morocco", "spain", "belgium",
-  "norway", "england", "argentina", "switzerland",
-];
-
-function isRelevant(fixtureId: number, question: string): boolean {
-  const base = QF.find(q => fixtureId >= q && fixtureId < q + 1_000_000);
-  if (base) return true;
-  const lower = question.toLowerCase();
-  return QF_TEAMS.some(t => lower.includes(t));
+function isRelevant(fixtureId: number): boolean {
+  return QF.some(q => fixtureId >= q && fixtureId < q + 1_000_000);
 }
 
 async function main() {
@@ -64,14 +55,14 @@ async function main() {
 
     if (status === 4) continue; // already cancelled
 
-    const relevant = isRelevant(fixtureId, question);
+    const relevant = isRelevant(fixtureId);
     markets.push({ pubkey: r.pubkey, fixtureId, question, creator, status });
     if (!relevant) {
       console.log(`  ❌ [${creator.slice(0, 8)}] #${fixtureId} "${question.slice(0, 50)}"`);
     }
   }
 
-  const toCancel = markets.filter(m => !isRelevant(m.fixtureId, m.question));
+  const toCancel = markets.filter(m => !isRelevant(m.fixtureId));
   console.log(`\nTo cancel: ${toCancel.length}/${markets.length}`);
 
   // Load both wallets
