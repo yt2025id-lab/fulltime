@@ -265,7 +265,7 @@ export default function Dashboard() {
       const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
       const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
       const question = qType === "draw"
-        ? `Will ${home} vs ${away} end in a draw?`
+        ? `Will ${home} lose or draw?`
         : `Will ${home} beat ${away}?`;
       const nowTs = Math.floor(Date.now() / 1000);
       const openTime = nowTs + 300; // 5 min from now
@@ -510,7 +510,7 @@ export default function Dashboard() {
                             className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "draw" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
                           >Draw</button>
                         </div>
-                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : `Will ${home} vs ${away} end in a draw?`}</span>
+                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : `Will ${home} lose or draw?`}</span>
                       </div>
                       {hasExisting && (
                         <p className="mt-2 text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet to create another</p>
@@ -684,8 +684,8 @@ export default function Dashboard() {
                           <div className="w-full flex gap-2">
                             <input type="number" step="0.01" min="0.01" className="flex-1 bg-white/5 border border-white/10 rounded-full px-3 py-2 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
                             <div className="flex gap-1">
-                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending"} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-green-300 disabled:opacity-30">YES</button>
-                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending"} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-red-300 disabled:opacity-30">NO</button>
+                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-full px-4 py-2 text-sm font-mono disabled:opacity-30 transition-colors ${myBet?.optionIndex === 0 ? 'bg-green-600/30 text-green-300 border border-green-500/30' : 'liquid-glass text-green-300'}`}>{myBet?.optionIndex === 0 ? 'BET YES ✓' : 'YES'}</button>
+                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-full px-4 py-2 text-sm font-mono disabled:opacity-30 transition-colors ${myBet?.optionIndex === 1 ? 'bg-red-600/30 text-red-300 border border-red-500/30' : 'liquid-glass text-red-300'}`}>{myBet?.optionIndex === 1 ? 'BET NO ✓' : 'NO'}</button>
                             </div>
                           </div>
                         ) : (
