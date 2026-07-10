@@ -350,7 +350,7 @@ export default function Dashboard() {
       setStatus({ type: "success", msg: `Bet ${optionIndex === 0 ? "YES" : "NO"} ${betAmount} SOL!` });
       setPayTx("success"); setTimeout(() => setPayTx("idle"), 2000);
       reload();
-    } catch (e: any) { setPayTx("fail"); setStatus({ type: "error", msg: e.message?.slice(0, 120) || String(e) }); }
+    } catch (e: any) { setPayTx("fail"); console.error("placeBet err:", e); setStatus({ type: "error", msg: e.message?.slice(0, 120) || String(e) }); }
   };
 
   const resolveMarket = async (marketPk: PublicKey, outcome: boolean) => {
