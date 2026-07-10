@@ -593,21 +593,24 @@ export default function Dashboard() {
         {/* Wallet Card */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-mono text-xs text-white/30 mb-1">{wallet?.adapter?.name || "Wallet"}</p>
-                <p className="font-mono font-semibold text-white">{publicKey?.toBase58().slice(0, 8)}...{publicKey?.toBase58().slice(-6)}</p>
+            <div className="_card max-w-md mx-auto">
+              <div className="_card__border"></div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="_card_paragraph" style={{width:'auto', margin:0, fontSize:'0.65rem'}}>{wallet?.adapter?.name || "Wallet"}</p>
+                  <p className="_card_title" style={{fontSize:'0.85rem'}}>{publicKey?.toBase58().slice(0, 8)}...{publicKey?.toBase58().slice(-6)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="_card_paragraph" style={{width:'auto', margin:0, fontSize:'0.65rem'}}>Balance</p>
+                  <p className="font-mono font-semibold text-green-300">◎ {balance !== null ? (balance / 1e9).toFixed(3) : "..."} SOL</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-mono text-xs text-white/30 mb-1">Balance</p>
-                <p className="font-mono font-semibold text-green-300">◎ {balance !== null ? (balance / 1e9).toFixed(3) : "..."} SOL</p>
-              </div>
+              {(balance !== null && balance < 0.5 * 1e9) && (
+                <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                  <p className="text-xs font-mono text-yellow-300/70 text-center">Low balance — use <Link to="/faucet" className="underline text-yellow-300">Faucet</Link> to get test SOL</p>
+                </div>
+              )}
             </div>
-            {(balance !== null && balance < 0.5 * 1e9) && (
-              <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                <p className="text-xs font-mono text-yellow-300/70 text-center">Low balance — use <Link to="/faucet" className="underline text-yellow-300">Faucet</Link> to get test SOL</p>
-              </div>
-            )}
           </motion.div>
         )}
 
