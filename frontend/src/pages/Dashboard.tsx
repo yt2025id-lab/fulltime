@@ -229,7 +229,8 @@ export default function Dashboard() {
         };
       });
       setBets(list);
-    } catch {}
+      console.log("loadBets found", list.length, "bets");
+    } catch (e) { console.error("loadBets error", e); }
   }, [program, publicKey]);
 
   useEffect(() => { loadMarkets(); }, [connection]);
