@@ -294,8 +294,8 @@ export default function Dashboard() {
     try {
       const dl = Math.floor(new Date(deadline).getTime() / 1000);
       const nowTs = Math.floor(Date.now() / 1000);
-      const openTime = nowTs + 10;
-      const closeTime = Math.max(openTime + 3600, dl);
+      const openTime = nowTs + 300; // 5 min from now
+      const closeTime = Math.max(openTime + 3600, dl + 60);
       mark("Creating manual market...");
       await program.methods
         .createMarket(new BN(0), question, new BN(openTime), new BN(closeTime), false)
