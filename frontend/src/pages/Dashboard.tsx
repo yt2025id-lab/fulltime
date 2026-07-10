@@ -718,7 +718,7 @@ export default function Dashboard() {
                               <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 1 ? '✓ BET NO' : 'NO'}</button>
                             </div>
                           ) : (
-                            <button onClick={() => setBetMarket(m.pubkey.toString())} className="flex-1 rounded-lg border border-red-400/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950">Place Bet</button>
+                            <button onClick={() => setBetMarket(m.pubkey.toString())} className={`flex-1 rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:cursor-default ${myBet ? 'border-amber-500/40 text-amber-400/70' : 'border-red-400/50 text-red-400 hover:bg-red-400 hover:text-neutral-950'}`}>{myBet ? '✓ Bet Active' : 'Place Bet'}</button>
                           )}
                         </>
                       )}
