@@ -197,16 +197,38 @@ export default function Dashboard() {
   const loadBets = useCallback(async () => {
     if (!program || !publicKey) return;
     try {
-      const all = await (program as any).account.bet.all([
-        { memcmp: { offset: 40, bytes: publicKey.toBase58() } },
-      ]);
-      setBets(all.map((a: any) => ({
-        market: a.account.market.toString(),
-        optionIndex: a.account.optionIndex,
-        amount: Number(a.account.amount),
-        claimed: a.account.claimed,
-        pubkey: a.publicKey,
-      })));
+      const betDiscB58 = (program as any).coder.accounts.memcmp("bet")?.bytes;
+      if (!betDiscB58) return;
+      const resp = await fetch(connection.rpcEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0", id: 1,
+          method: "getProgramAccounts",
+          params: [FULLTIME_ID, {
+            commitment: "confirmed",
+            encoding: "base64",
+            filters: [
+              { memcmp: { offset: 0, bytes: betDisc } },
+              { memcmp: { offset: 8, bytes: publicKey.toBase58() } },
+            ],
+          }],
+        }),
+      });
+      const raw = await resp.json();
+      const list: UIBet[] = (raw.result || []).map((r: any) => {
+        const data = Uint8Array.from(atob(r.account.data[0]), c => c.charCodeAt(0));
+        const readU64 = (o: number) => Number(new DataView(data.buffer.slice(data.byteOffset + o, data.byteOffset + o + 8)).getBigUint64(0, true));
+        const readU8 = (o: number) => data[o];
+        return {
+          market: new PublicKey(data.slice(40, 72)).toString(),
+          optionIndex: readU8(72),
+          amount: readU64(73),
+          claimed: readU8(81) === 1,
+          pubkey: r.pubkey,
+        };
+      });
+      setBets(list);
     } catch {}
   }, [program, publicKey]);
 
