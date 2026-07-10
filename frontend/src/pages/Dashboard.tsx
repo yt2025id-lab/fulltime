@@ -480,7 +480,7 @@ export default function Dashboard() {
             </div>
             <p className="font-mono text-xs text-white/30 mb-4">Create a trustless prediction market directly from these TxLINE fixtures — auto-settled via Merkle proof CPI.</p>
             {showFixtures && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
                 {fixtures.slice(0, 8).map(f => {
                   const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
                   const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
@@ -490,29 +490,40 @@ export default function Dashboard() {
                   const existing = markets.filter(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
                   const hasExisting = existing.length > 0;
                   return (
-                    <div key={f.FixtureId} className="card flex flex-col gap-3 p-4 w-full bg-[#27272a] rounded-xl">
-                      <div className="image_container relative w-full h-24 bg-[#4c1d95] rounded-lg overflow-hidden flex items-center justify-center">
-                        <svg className="w-10 h-10 fill-[#d9d9d9]" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <div key={f.FixtureId} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 hover:border-red-400/30 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <div className="font-mono text-sm text-white font-semibold">{flagEmoji(home)} {home} vs {away} {flagEmoji(away)}</div>
+                          <div className="font-mono text-[10px] text-white/30 mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
+                        </div>
+                        <button
+                          onClick={() => createFixtureMarket(f, qt)}
+                          disabled={creating}
+                          className="shrink-0 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-full px-4 py-2 text-xs font-mono font-semibold transition-colors"
+                        >
+                          Create & Bet
+                        </button>
                       </div>
-                      <p className="title text-sm font-semibold text-[#d9d9d9] truncate">{home} vs {away}</p>
-                      <p className="size text-[10px] text-[#d9d9d9]/70">#{f.FixtureId} · {dateStr} · Trustless</p>
-                      <ul className="list-size flex items-center gap-1">
-                        <li className="item-list">
-                          <button onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))} className={`item-list-button px-2.5 py-1 text-[10px] bg-[#18181b] text-[#d9d9d9] border-2 rounded transition-all ${qt === "win" ? "bg-[#6d28d9] border-[#2e1065] shadow-[inset_0px_1px_4px_#2e1065]" : "border-[#18181b] hover:border-[#d9d9d9]"}`}>Win</button>
-                        </li>
-                        <li className="item-list">
-                          <button onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))} className={`item-list-button px-2.5 py-1 text-[10px] bg-[#18181b] text-[#d9d9d9] border-2 rounded transition-all ${qt === "draw" ? "bg-[#6d28d9] border-[#2e1065] shadow-[inset_0px_1px_4px_#2e1065]" : "border-[#18181b] hover:border-[#d9d9d9]"}`}>Draw</button>
-                        </li>
-                        <li className="item-list">
-                          <button onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))} className={`item-list-button px-2.5 py-1 text-[10px] bg-[#18181b] text-[#d9d9d9] border-2 rounded transition-all ${qt === "lose" ? "bg-[#6d28d9] border-[#2e1065] shadow-[inset_0px_1px_4px_#2e1065]" : "border-[#18181b] hover:border-[#d9d9d9]"}`}>Lose</button>
-                        </li>
-                      </ul>
-                      <p className="text-[10px] text-[#d9d9d9]/60 truncate">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</p>
-                      {hasExisting && <p className="text-[10px] text-yellow-400/60">Market exists · switch wallet</p>}
-                      <button onClick={() => createFixtureMarket(f, qt)} disabled={creating} className="cart-button flex items-center justify-center gap-1 w-full py-2 text-xs font-medium text-[#d9d9d9] bg-[linear-gradient(0deg,#6d28d9_50%,#d9d9d9_125%)] border-2 border-[hsla(262,83%,58%,0.5)] rounded-lg shadow-[inset_0_0_0.25rem_1px_#d9d9d9] disabled:opacity-40">
-                        <svg className="cart-icon w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                        Create & Bet
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex bg-white/5 rounded-full overflow-hidden border border-white/10">
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "win" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Win</button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "draw" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Draw</button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "lose" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Lose</button>
+                        </div>
+                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</span>
+                      </div>
+                      {hasExisting && (
+                        <p className="mt-2 text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet to create another</p>
+                      )}
                     </div>
                   );
                 })}
@@ -545,21 +556,17 @@ export default function Dashboard() {
         {/* Custom Market */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="liquid-glass-strong rounded-[1.25rem] p-6 mb-8">
-            <div className="card flex flex-col gap-3 p-4 w-full bg-[#27272a] rounded-xl max-w-md mx-auto">
-              <div className="image_container relative w-full h-24 bg-[#4c1d95] rounded-lg overflow-hidden flex items-center justify-center">
-                <svg className="w-10 h-10 fill-[#d9d9d9]" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+            <h2 className="font-mono tracking-[-1px] text-white text-2xl tracking-[-1px] mb-4">Custom Market</h2>
+            <p className="font-mono text-xs text-white/30 mb-3">Create a manual YES/NO market for any question. You resolve the outcome.</p>
+            <div className="space-y-3">
+              <input className="w-full bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50 transition-all" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-red-400/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
               </div>
-              <p className="title text-sm font-semibold text-[#d9d9d9]">Custom Market</p>
-              <p className="size text-[10px] text-[#d9d9d9]/70">Create a manual YES/NO market for any question. You resolve the outcome.</p>
-              <div className="flex flex-col gap-2 mt-1">
-                <input className="w-full bg-[#18181b] border-2 border-[#18181b] rounded px-3 py-2 text-xs text-[#d9d9d9] placeholder-[#d9d9d9]/40 focus:outline-none focus:border-[#6d28d9] transition-colors" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
-                <input className="w-full bg-[#18181b] border-2 border-[#18181b] rounded px-3 py-2 text-xs text-[#d9d9d9] placeholder-[#d9d9d9]/40 focus:outline-none focus:border-[#6d28d9] transition-colors" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
+              <div className="flex items-center gap-4">
+                <div className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60">Fee: <span className="text-red-300 font-medium">2%</span></div>
               </div>
-              <p className="text-xs text-[#d9d9d9]/60">Fee: <span className="text-[#6d28d9] font-medium">2%</span></p>
-              <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="cart-button flex items-center justify-center gap-1 w-full py-2 text-xs font-medium text-[#d9d9d9] bg-[linear-gradient(0deg,#6d28d9_50%,#d9d9d9_125%)] border-2 border-[hsla(262,83%,58%,0.5)] rounded-lg shadow-[inset_0_0_0.25rem_1px_#d9d9d9] disabled:opacity-40">
-                <svg className="cart-icon w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                {creating ? "Creating..." : "Create Market"}
-              </button>
+              <button onClick={createManualMarket} disabled={creating || !question || !deadline} className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-black rounded-full px-5 py-3 text-sm font-semibold font-mono disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/20">{creating ? "Creating..." : "Create Market"}</button>
             </div>
           </motion.div>
         )}
