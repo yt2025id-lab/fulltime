@@ -201,7 +201,8 @@ export default function Portfolio() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <h2 className="text-xl font-black mb-4 mt-8">HISTORY ({claimed.length})</h2>

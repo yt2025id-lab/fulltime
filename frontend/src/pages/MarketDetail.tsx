@@ -144,7 +144,7 @@ export default function MarketDetail() {
           [Buffer.from("bet"), new PublicKey(market.pda).toBytes(), wallet.publicKey!.toBytes()],
           program.programId
         );
-        const bet = await program.account.bet.fetch(betPda);
+        const bet = await (program as any).account.bet.fetch(betPda);
         const amt = bet.amount.toNumber();
         setUserBet({ optionIndex: bet.optionIndex, amount: amt, claimed: bet.claimed });
         if (market.status === "settled" && bet.optionIndex === market.winningOption) {
