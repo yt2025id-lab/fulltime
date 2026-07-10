@@ -178,7 +178,7 @@ export default function Dashboard() {
 
         const statusMap = ["pending", "open", "closed", "settled", "cancelled"];
         return {
-          pubkey: r.pubkey,
+          pubkey: new PublicKey(r.pubkey),
           fixtureId,
           question,
           creator: creator.toBase58(),
@@ -225,7 +225,7 @@ export default function Dashboard() {
           optionIndex: readU8(72),
           amount: readU64(73),
           claimed: readU8(81) === 1,
-          pubkey: r.pubkey,
+          pubkey: new PublicKey(r.pubkey),
         };
       });
       setBets(list);
