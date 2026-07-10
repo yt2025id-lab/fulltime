@@ -209,7 +209,7 @@ export default function Dashboard() {
             commitment: "confirmed",
             encoding: "base64",
             filters: [
-              { memcmp: { offset: 0, bytes: betDisc } },
+              { memcmp: { offset: 0, bytes: betDiscB58 } },
               { memcmp: { offset: 8, bytes: publicKey.toBase58() } },
             ],
           }],
