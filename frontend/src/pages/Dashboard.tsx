@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletModalButton, WalletDisconnectButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
 import { useProgram, FULLTIME_ID } from "../context/FullTimeContext";
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, Connection, clusterApiUrl } from "@solana/web3.js";
@@ -438,15 +438,9 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center justify-end">
             {connected ? (
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-mono text-white/70">
-                  <span className="text-white/40">◎</span> {balance !== null ? (balance / 1e9).toFixed(2) : "..."} SOL
-                </div>
-                <button onClick={() => setShowPortfolio(true)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:text-white font-mono transition-colors">{publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}</button>
-                <button onClick={disconnect} className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/60 hover:text-red-300 font-mono transition-colors">Disconnect</button>
-              </div>
+              <WalletDisconnectButton className="!bg-white/10 hover:!bg-white/20 !text-white !rounded-full !px-4 !py-1.5 !text-xs !font-mono !h-auto !border-0 !transition-colors" />
             ) : (
-              <WalletMultiButton className="!bg-red-600 hover:!bg-red-500 !text-white !rounded-full !px-5 !py-2 !text-sm !font-semibold !font-mono !h-auto !transition-colors" />
+              <WalletModalButton className="!bg-red-600 hover:!bg-red-500 !text-white !rounded-full !px-5 !py-2 !text-sm !font-semibold !font-mono !h-auto !transition-colors" />
             )}
           </div>
         </div>
