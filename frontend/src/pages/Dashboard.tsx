@@ -418,9 +418,10 @@ export default function Dashboard() {
   const dt = (ts: number) => new Date(ts * 1000).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-900 via-neutral-950 to-zinc-950 relative">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-950 via-zinc-900 to-zinc-950 relative">
+      <div className="fixed inset-0 z-0 bg-cover bg-center opacity-[0.04]" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1920&q=80)` }} />
 
-      <nav className="sticky top-0 z-40 border-b border-amber-500/10 bg-neutral-950/95 backdrop-blur-lg">
+      <nav className="sticky top-0 z-40 border-b border-emerald-500/20 bg-zinc-900/90 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
           <div className="flex items-center gap-4">
             <Link to="/" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
@@ -443,7 +444,7 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <div className="relative z-10 border-b border-amber-500/5 bg-neutral-800/40 backdrop-blur-sm">
+      <div className="relative z-10 border-b border-emerald-500/10 bg-zinc-800/30 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-center gap-4 text-xs font-mono text-white/50">
           <span>{now.toLocaleDateString("en-US", { weekday: "long" })}</span>
           <span className="text-white/20">|</span>
@@ -489,10 +490,10 @@ export default function Dashboard() {
                   const existing = markets.filter(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
                   const hasExisting = existing.length > 0;
                   return (
-                    <div key={f.FixtureId} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
-                      <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
+                    <div key={f.FixtureId} className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20">
+                      <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20"></div>
                       <div className="relative flex flex-col gap-4">
-                        <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+                        <div className="flex items-center justify-between border-b border-zinc-600/20 pb-4">
                           <div>
                             <div className="font-semibold text-neutral-200 text-sm"><span className="text-xl">{flagEmoji(home)}</span> {home} vs {away} <span className="text-xl">{flagEmoji(away)}</span></div>
                             <div className="text-[10px] text-neutral-500 font-mono mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
@@ -533,10 +534,10 @@ export default function Dashboard() {
         {/* Wallet Card */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8">
-            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
-              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
+            <div className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20">
+              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20"></div>
               <div className="relative flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+                <div className="flex items-center justify-between border-b border-zinc-600/20 pb-4">
                   <div>
                     <p className="text-[10px] font-medium text-neutral-500 font-mono">{wallet?.adapter?.name || "Wallet"}</p>
                     <p className="font-semibold text-neutral-200 text-sm">{publicKey?.toBase58().slice(0, 8)}...{publicKey?.toBase58().slice(-6)}</p>
@@ -559,16 +560,16 @@ export default function Dashboard() {
         {/* Custom Market */}
         {connected && (
           <motion.div initial={{ filter: "blur(5px)", opacity: 0 }} animate={{ filter: "blur(0px)", opacity: 1 }} transition={{ duration: 0.6 }} className="mb-8">
-            <div className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
-              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
+            <div className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20">
+              <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20"></div>
               <div className="relative flex flex-col gap-4">
-                <div className="border-b border-neutral-800 pb-4">
+                <div className="border-b border-zinc-600/20 pb-4">
                   <p className="font-semibold text-neutral-200 text-sm">Custom Market</p>
                   <p className="text-[10px] text-neutral-500 font-mono mt-1">Create a manual YES/NO market for any question. You resolve the outcome.</p>
                 </div>
-                <input className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
+                <input className="w-full bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" placeholder="Will Argentina win the 2026 World Cup?" value={question} onChange={e => setQuestion(e.target.value)} />
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <input className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
+                  <input className="flex-1 bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
                 </div>
                 <div className="flex items-center gap-4">
                   <p className="text-[10px] font-mono text-neutral-500">Fee: <span className="text-neutral-300 font-medium">2%</span></p>
@@ -641,11 +642,11 @@ export default function Dashboard() {
               const away = fixture ? (fixture.Participant1IsHome ? fixture.Participant2 : fixture.Participant1) : null;
 
               return (
-                <div key={m.pubkey.toString()} className="group relative w-full overflow-hidden rounded-2xl bg-neutral-900/80 p-5 font-sans shadow-2xl border border-neutral-700/40">
-                  <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-amber-500/20 group-hover:via-rose-500/15"></div>
+                <div key={m.pubkey.toString()} className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20">
+                  <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20"></div>
                   <div className="relative flex flex-col gap-4">
                     {/* Header */}
-                    <div className="flex items-start justify-between border-b border-neutral-800 pb-4">
+                    <div className="flex items-start justify-between border-b border-zinc-600/20 pb-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-400/10">
                           <svg className="h-5 w-5 text-red-400" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -680,7 +681,7 @@ export default function Dashboard() {
 
                     {/* Progress Bar */}
                     <div className="relative h-6 w-full">
-                      <div className="h-full w-full rounded-full bg-neutral-800 overflow-hidden">
+                      <div className="h-full w-full rounded-full bg-zinc-700/30 overflow-hidden">
                         <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-green-500 transition-all" style={{ width: `${yesPct}%` }} />
                       </div>
                       <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-white/70 font-semibold">{yesPct}% YES</span>
@@ -691,42 +692,42 @@ export default function Dashboard() {
 
                     {/* Your Bet */}
                     {myBet && (
-                      <div className="border-t border-neutral-800 pt-3">
+                      <div className="border-t border-zinc-600/20 pt-3">
                         <div className="flex items-center justify-between">
                           <p className="text-xs text-neutral-400 font-mono">Your bet: <span className={myBet.optionIndex === 0 ? "text-green-400" : "text-red-400"}>{myBet.optionIndex === 0 ? "YES" : "NO"} {lamportsToSol(myBet.amount)} SOL</span>
                             {myBet.claimed && <span className="ml-1 text-red-400">(Claimed)</span>}
                           </p>
                         </div>
                         {isCancelled && !myBet.claimed && (
-                          <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950">Refund</button>
+                          <button onClick={() => refundBet(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-black">Refund</button>
                         )}
                         {m.status === "settled" && myBet.optionIndex === m.winningOption && !myBet.claimed && (
-                          <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950">Claim Winnings</button>
+                          <button onClick={() => claimPayout(m.pubkey, myBet.pubkey)} className="mt-2 w-full rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black">Claim Winnings</button>
                         )}
                       </div>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="border-t border-neutral-800 pt-3 flex flex-wrap gap-2">
+                    <div className="border-t border-zinc-600/20 pt-3 flex flex-wrap gap-2">
                       {m.status === "open" && (
                         <>
                           {betMarket === m.pubkey.toString() ? (
                             <div className="w-full flex gap-2">
-                              <input type="number" step="0.01" min="0.01" className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-red-400/50" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
-                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 0 ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-green-500/50 bg-transparent text-green-400 hover:bg-green-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 0 ? '✓ BET YES' : 'YES'}</button>
-                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-neutral-950'}`}>{myBet?.optionIndex === 1 ? '✓ BET NO' : 'NO'}</button>
+                              <input type="number" step="0.01" min="0.01" className="flex-1 bg-zinc-700/50 border border-zinc-600/30 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50" placeholder="SOL amount" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
+                              <button onClick={() => { setBetSide(0); placeBet(m.pubkey, 0); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 0 ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-green-500/50 bg-transparent text-green-400 hover:bg-green-400 hover:text-black'}`}>{myBet?.optionIndex === 0 ? '✓ BET YES' : 'YES'}</button>
+                              <button onClick={() => { setBetSide(1); placeBet(m.pubkey, 1); }} disabled={payTx === "pending" || !!myBet} className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:opacity-30 ${myBet?.optionIndex === 1 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-red-500/50 bg-transparent text-red-400 hover:bg-red-400 hover:text-black'}`}>{myBet?.optionIndex === 1 ? '✓ BET NO' : 'NO'}</button>
                             </div>
                           ) : (
                             <button onClick={() => setBetMarket(m.pubkey.toString())} className={`flex-1 rounded-lg border px-4 py-2 text-xs font-medium transition-colors duration-300 disabled:cursor-default ${myBet ? 'border-amber-500/40 text-amber-400/70' : 'border-amber-500/40 text-amber-400 hover:bg-amber-400 hover:text-black'}`}>{myBet ? '✓ Bet Active' : 'Place Bet'}</button>
                           )}
                         </>
                       )}
-                      {canOpen && <button onClick={() => openMarket(m.pubkey)} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950">Open Market</button>}
-                      {canClose && <button onClick={() => closeBetting(m.pubkey)} className="flex-1 rounded-lg border border-yellow-500/50 bg-transparent px-4 py-2 text-xs font-medium text-yellow-400 transition-colors duration-300 hover:bg-yellow-400 hover:text-neutral-950">Close Betting</button>}
+                      {canOpen && <button onClick={() => openMarket(m.pubkey)} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black">Open Market</button>}
+                      {canClose && <button onClick={() => closeBetting(m.pubkey)} className="flex-1 rounded-lg border border-yellow-500/50 bg-transparent px-4 py-2 text-xs font-medium text-yellow-400 transition-colors duration-300 hover:bg-yellow-400 hover:text-black">Close Betting</button>}
                       {canResolve && (
                         <>
-                          <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-neutral-950 disabled:opacity-30">Resolve YES</button>
-                          <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-red-500/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-neutral-950 disabled:opacity-30">Resolve NO</button>
+                          <button onClick={() => resolveMarket(m.pubkey, true)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-green-500/50 bg-transparent px-4 py-2 text-xs font-medium text-green-400 transition-colors duration-300 hover:bg-green-400 hover:text-black disabled:opacity-30">Resolve YES</button>
+                          <button onClick={() => resolveMarket(m.pubkey, false)} disabled={payTx === "pending"} className="flex-1 rounded-lg border border-red-500/50 bg-transparent px-4 py-2 text-xs font-medium text-red-400 transition-colors duration-300 hover:bg-red-400 hover:text-black disabled:opacity-30">Resolve NO</button>
                         </>
                       )}
                       {canCancel && <button onClick={() => cancelMarket(m.pubkey)} className="rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-xs font-medium text-neutral-500 transition-colors duration-300 hover:bg-amber-400 hover:text-black hover:border-amber-400">🗑</button>}
@@ -743,7 +744,7 @@ export default function Dashboard() {
           <div className="fixed inset-0 z-50 flex" onClick={() => setShowPortfolio(false)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="ml-auto w-full max-w-md h-full bg-neutral-950 border-l border-neutral-800 overflow-y-auto" onClick={e => e.stopPropagation()}>
+              className="ml-auto w-full max-w-md h-full bg-neutral-950 border-l border-zinc-600/20 overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-mono font-bold text-white text-xl">Portfolio</h2>
