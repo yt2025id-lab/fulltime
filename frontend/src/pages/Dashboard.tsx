@@ -103,7 +103,7 @@ export default function Dashboard() {
   const [fixtures, setFixtures] = useState<TxLineFixture[]>([]);
 
   function showMarket(fixtureId: number): boolean {
-    return fixtureId === 18213979;
+    return fixtureId === 18218149;
   }
   const [showFixtures, setShowFixtures] = useState(true);
 
@@ -266,7 +266,8 @@ export default function Dashboard() {
       const question = `Will ${home} beat ${away}?`;
       const nowTs = Math.floor(Date.now() / 1000);
       const openTime = nowTs + 300; // 5 min from now
-      const closeTime = openTime + 172800; // 2 days after open
+      const matchTs = Math.floor(new Date(f.StartTime).getTime() / 1000);
+      const closeTime = Math.max(openTime + 60, matchTs); // close at kickoff
       mark("Creating market...");
       await program.methods
         .createMarket(new BN(f.FixtureId), question, new BN(openTime), new BN(closeTime), true)
@@ -474,7 +475,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
                 {fixtures.filter(f => {
                   const fixtureId = f.FixtureId;
-                  return !markets.some(m => m.fixtureId === fixtureId && (m.status === "open" || m.status === "pending"));
+                  return !markets.some(m => m.fixtureId === fixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"));
                 }).slice(0, 8).map(f => {
                   const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
                   const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
@@ -496,7 +497,7 @@ export default function Dashboard() {
                     </div>
                   );
                 })}
-                {fixtures.filter(f => !markets.some(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending"))).length === 0 && (
+                {fixtures.filter(f => !markets.some(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled"))).length === 0 && (
                   <p className="col-span-2 text-center font-mono text-xs text-white/20 py-4">All fixtures have markets created</p>
                 )}
               </div>
