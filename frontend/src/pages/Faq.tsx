@@ -68,7 +68,7 @@ export default function Faq() {
         <div className="absolute inset-0 bg-black/85 backdrop-blur-[2px]" />
       </div>
 
-      <nav className="sticky top-0 z-40 border-b border-red-800/30 bg-[#c0392b]/95 backdrop-blur-lg">
+      <nav className="sticky top-0 z-40 border-b border-emerald-500/20 bg-zinc-900/90 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
           <div className="flex items-center gap-4">
             <Link to="/app" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
@@ -86,9 +86,9 @@ export default function Faq() {
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-12">
         <motion.div {...fadeIn} transition={{ duration: 0.6 }}>
-          <p className="text-sm font-mono text-red-300/60 mb-4">// FAQ</p>
+          <p className="text-sm font-mono text-amber-400/60 mb-4">// FAQ</p>
           <h1 className="font-mono font-bold text-white text-5xl md:text-6xl tracking-[-2px] mb-4">
-            Frequently Asked <span className="text-red-300/60">Questions</span>
+            Frequently Asked <span className="text-amber-400/60">Questions</span>
           </h1>
           <p className="font-mono text-sm text-white/40 mb-10">
             Everything about FullTime — trustless prediction market for World Cup 2026 on Solana.

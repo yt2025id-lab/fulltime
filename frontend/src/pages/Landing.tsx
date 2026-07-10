@@ -254,7 +254,7 @@ export default function Landing() {
       <Marquee items={c4} reverse />
 
       {/* Footer */}
-      <footer className="relative bg-black border-t border-white/5 px-8 py-8">
+      <footer className="relative bg-black border-t border-emerald-500/10 px-8 py-8">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
           <Button onClick={() => navigate("/app")}>Launch dApp</Button>
           <div className="flex flex-col items-center gap-1">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletModalButton } from "@solana/wallet-adapter-react-ui";
 import { Connection, LAMPORTS_PER_SOL, clusterApiUrl } from "@solana/web3.js";
 import { motion } from "framer-motion";
 import GlowCard from "../components/GlowCard";
@@ -55,7 +55,7 @@ export default function Faucet() {
         <div className="absolute inset-0 bg-black/85 backdrop-blur-[2px]" />
       </div>
 
-      <nav className="sticky top-0 z-40 border-b border-red-800/30 bg-[#c0392b]/95 backdrop-blur-lg">
+      <nav className="sticky top-0 z-40 border-b border-emerald-500/20 bg-zinc-900/90 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
           <div className="flex items-center gap-4">
             <Link to="/app" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
@@ -74,9 +74,9 @@ export default function Faucet() {
 
       <div className="relative z-10 max-w-lg mx-auto px-4 sm:px-6 py-16">
         <motion.div {...fadeIn} transition={{ duration: 0.6 }} className="text-center mb-10">
-          <p className="text-sm font-mono text-red-300/60 mb-4">// Faucet</p>
+          <p className="text-sm font-mono text-amber-400/60 mb-4">// Faucet</p>
           <h1 className="font-mono font-bold text-white text-5xl md:text-6xl tracking-[-2px] mb-4">
-            Devnet <span className="text-red-300/60">SOL</span>
+            Devnet <span className="text-amber-400/60">SOL</span>
           </h1>
           <p className="font-mono text-sm text-white/40">Free test SOL for FullTime on Solana Devnet</p>
         </motion.div>
@@ -91,7 +91,7 @@ export default function Faucet() {
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-xs text-white/40">Balance</div>
-                  <div className="font-mono text-white text-xl font-bold">{balance !== null ? solDisplay(balance) : "—"} <span className="text-red-300/60 text-sm">SOL</span></div>
+                  <div className="font-mono text-white text-xl font-bold">{balance !== null ? solDisplay(balance) : "—"} <span className="text-amber-400/60 text-sm">SOL</span></div>
                   <div className="font-mono text-[10px] text-amber-400/50 mt-0.5">Devnet — no real value</div>
                 </div>
               </div>
@@ -104,8 +104,8 @@ export default function Faucet() {
             <GlowCard className="!min-h-0">
               <div className="p-6 w-full text-center">
                 <p className="font-mono text-sm text-white/50 mb-4">Connect Phantom to request devnet SOL</p>
-                <p className="font-mono text-xs text-white/30 mb-6">Settings → Developer Settings → Testnet Mode → <span className="text-red-300/60">Devnet</span></p>
-                <WalletMultiButton className="!bg-red-600 hover:!bg-red-500 !text-white !rounded-full !px-6 !py-3 !text-sm !font-semibold !font-mono !h-auto !transition-colors" />
+                <p className="font-mono text-xs text-white/30 mb-6">Settings → Developer Settings → Testnet Mode → <span className="text-amber-400/60">Devnet</span></p>
+              <WalletModalButton className="!bg-amber-500 hover:!bg-amber-400 !text-black !rounded-full !px-6 !py-3 !text-sm !font-bold !font-mono !h-auto !transition-colors" />
               </div>
             </GlowCard>
           </motion.div>
@@ -114,7 +114,7 @@ export default function Faucet() {
             <button
               onClick={requestAirdrop}
               disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-full px-6 py-3.5 text-sm font-bold font-mono transition-colors mb-4"
+              className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-black rounded-full px-6 py-3.5 text-sm font-bold font-mono transition-colors mb-4"
             >
               {loading ? "Requesting... approve in Phantom" : "Request 1 SOL"}
             </button>

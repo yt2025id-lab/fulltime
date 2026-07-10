@@ -172,7 +172,7 @@ export default function Matches() {
         <div className="absolute inset-0 bg-black/85 backdrop-blur-[2px]" />
       </div>
 
-      <nav className="sticky top-0 z-40 border-b border-red-800/30 bg-[#c0392b]/95 backdrop-blur-lg">
+      <nav className="sticky top-0 z-40 border-b border-emerald-500/20 bg-zinc-900/90 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto grid grid-cols-3 items-center px-4 sm:px-6 py-3">
           <div className="flex items-center gap-4">
             <Link to="/app" className="text-sm text-white/70 hover:text-white font-mono transition-colors">&larr; Back</Link>
@@ -193,14 +193,14 @@ export default function Matches() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-mono font-bold text-white text-5xl md:text-6xl tracking-[-2px]">
-              World Cup <span className="text-red-300/60">2026</span>
+              World Cup <span className="text-amber-400/60">2026</span>
             </h1>
             <p className="font-mono text-xs text-white/40 mt-1">Live data via TxLINE — Hackathon Sponsor</p>
           </div>
           {lastUpdate && (
             <div className="text-right">
               <div className="text-xs text-white/20 font-mono">Auto-refresh 30s</div>
-              <div className="text-xs text-red-300/50 font-mono">Updated {lastUpdate}</div>
+              <div className="text-xs text-amber-400/50 font-mono">Updated {lastUpdate}</div>
             </div>
           )}
         </div>
@@ -273,7 +273,7 @@ export default function Matches() {
           <div className="space-y-2">
             {scorers.map((s, i) => (
               <div key={s.player} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 flex items-center gap-4">
-                <span className={`font-mono text-lg w-8 shrink-0 ${i === 0 ? "text-red-400 font-bold" : i < 3 ? "text-red-300/60" : "text-white/30"}`}>{i + 1}</span>
+                <span className={`font-mono text-lg w-8 shrink-0 ${i === 0 ? "text-red-400 font-bold" : i < 3 ? "text-amber-400/60" : "text-white/30"}`}>{i + 1}</span>
                 <span className="text-lg shrink-0">{s.flag}</span>
                 <div className="flex-1"><span className="font-mono font-semibold text-white text-sm">{s.player}</span><span className="ml-2 font-mono text-xs text-white/30">{s.team}</span></div>
                 <div className="text-right shrink-0"><span className="font-mono text-lg text-red-400 font-bold">{s.goals}</span><div className="text-[10px] text-white/25 font-mono">{s.assists} assists · {s.matches} MP</div></div>
@@ -291,7 +291,7 @@ export default function Matches() {
                 for (const s of standings) { if (!grouped[s.group]) grouped[s.group] = []; grouped[s.group].push(s); }
                 return Object.entries(grouped).map(([group, teams]) => (
                   <div key={group}>
-                    <h3 className="font-mono text-sm text-red-300/60 mb-3">{group}</h3>
+                    <h3 className="font-mono text-sm text-amber-400/60 mb-3">{group}</h3>
                     <div className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl overflow-hidden">
                       <table className="w-full text-left">
                         <thead><tr className="text-white/25 text-[10px] border-b border-white/[0.04]">{["#","Team","P","W","D","L","GF","GA","Pts"].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
@@ -317,7 +317,7 @@ export default function Matches() {
               }
               return STANDINGS.map(g => (
                 <div key={g.group}>
-                  <h3 className="font-mono text-sm text-red-300/60 mb-3">{g.group}</h3>
+                  <h3 className="font-mono text-sm text-amber-400/60 mb-3">{g.group}</h3>
                   <div className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl overflow-hidden">
                     <table className="w-full text-left">
                       <thead><tr className="text-white/25 text-[10px] border-b border-white/[0.04]">{["#","Team","P","W","D","L","GF","GA","Pts"].map(h => <th key={h} className="p-2 font-mono font-normal">{h}</th>)}</tr></thead>
@@ -349,7 +349,7 @@ export default function Matches() {
           <div className="space-y-8">
             {knockout.map((round) => (
               <div key={round.round}>
-                <h3 className="font-mono text-sm text-red-300/60 mb-3 tracking-wider uppercase">{round.round}</h3>
+                <h3 className="font-mono text-sm text-amber-400/60 mb-3 tracking-wider uppercase">{round.round}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {round.matches.map((m, mi) => (
                     <div key={mi} className="bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 hover:border-white/10 transition-colors">

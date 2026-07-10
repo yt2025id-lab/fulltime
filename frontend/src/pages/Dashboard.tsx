@@ -605,12 +605,12 @@ export default function Dashboard() {
             if (!showMarket(m.fixtureId)) return false;
             return true;
           }).length})</span></h2>
-          <button onClick={reload} disabled={loading} className="liquid-glass rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
+          <button onClick={reload} disabled={loading} className="bg-zinc-800/30 border border-zinc-600/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? "Loading..." : "Refresh"}</button>
         </div>
 
         {!connected ? (
           <div className="text-center py-20">
-            <div className="liquid-glass w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><span className="font-mono tracking-[-1px] text-white/40 text-3xl lowercase">f</span></div>
+            <div className="bg-zinc-800/30 border border-zinc-600/20 backdrop-blur-sm w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><span className="font-mono tracking-[-1px] text-white/40 text-3xl lowercase">f</span></div>
             <p className="text-white/40 font-mono text-sm">Connect wallet to view markets</p>
           </div>
         ) : markets.length === 0 && !loading ? (
@@ -744,16 +744,16 @@ export default function Dashboard() {
           <div className="fixed inset-0 z-50 flex" onClick={() => setShowPortfolio(false)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="ml-auto w-full max-w-md h-full bg-neutral-950 border-l border-zinc-600/20 overflow-y-auto" onClick={e => e.stopPropagation()}>
+              className="ml-auto w-full max-w-md h-full bg-zinc-900 border-l border-zinc-600/20 overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-mono font-bold text-white text-xl">Portfolio</h2>
                   <button onClick={() => setShowPortfolio(false)} className="text-white/40 hover:text-white font-mono text-sm">✕</button>
                 </div>
-                {publicKey && <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 mb-6">
+                {publicKey && <div className="bg-zinc-800/40 border border-zinc-600/20 rounded-2xl p-4 mb-6">
                   <div className="text-xs text-white/40 font-mono mb-1">Wallet</div>
                   <div className="font-mono text-xs text-white/50 break-all">{publicKey.toBase58().slice(0,12)}...{publicKey.toBase58().slice(-4)}</div>
-                  <div className="mt-2 font-mono text-lg text-white font-bold">{balance !== null ? solDisplay(balance) : "—"} <span className="text-red-300/60 text-sm">SOL</span></div>
+                  <div className="mt-2 font-mono text-lg text-white font-bold">{balance !== null ? solDisplay(balance) : "—"} <span className="text-amber-400/60 text-sm">SOL</span></div>
                 </div>}
                 {bets.length === 0 ? (
                   <p className="text-white/30 font-mono text-sm text-center py-8">No bets yet</p>
@@ -763,7 +763,7 @@ export default function Dashboard() {
                     const won = m?.status === "settled" && b.optionIndex === m.winningOption;
                     const canClaim = won && !b.claimed;
                     const canRefund = m?.status === "cancelled" && !b.claimed;
-                    return <div key={b.pubkey.toString()} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+                    return <div key={b.pubkey.toString()} className="bg-zinc-800/40 border border-zinc-600/20 rounded-xl p-4">
                       <div className="text-xs text-white/50 font-mono truncate mb-2">{m?.question || b.market.slice(0,20)}</div>
                       <div className="flex items-center justify-between">
                         <div><span className={`font-mono text-sm font-bold ${b.optionIndex===0?"text-green-400":"text-red-400"}`}>{b.optionIndex===0?"YES":"NO"}</span><span className="font-mono text-sm text-white/60 ml-2">{lamportsToSol(b.amount)} SOL</span></div>
@@ -785,7 +785,7 @@ export default function Dashboard() {
         {/* Toast */}
         {status && (
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={`liquid-glass-strong rounded-full px-6 py-3 text-sm font-mono flex items-center gap-3 ${status.type === "error" ? "text-red-300" : status.type === "success" ? "text-green-300" : "text-red-300"}`}>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={`bg-zinc-800/40 border border-zinc-600/20 backdrop-blur-xl rounded-full px-6 py-3 text-sm font-mono flex items-center gap-3 ${status.type === "error" ? "text-red-300" : status.type === "success" ? "text-green-300" : "text-amber-300"}`}>
               {status.type === "error" ? "✗" : status.type === "success" ? "✓" : "→"}
               <span>{status.msg}</span>
               {status.txHash && <a href={`https://solscan.io/tx/${status.txHash}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white underline">TX ↗</a>}
