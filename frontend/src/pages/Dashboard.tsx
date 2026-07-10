@@ -285,7 +285,11 @@ export default function Dashboard() {
     } catch (e: any) {
       const msg = e.message || String(e);
       console.error("createFixtureMarket error:", msg);
-      setStatus({ type: "error", msg: msg.slice(0, 200) });
+      if (msg.includes("already in use")) {
+        setStatus({ type: "error", msg: "This wallet already has a market for this fixture. Switch to another wallet (disconnect → select wallet) and try again." });
+      } else {
+        setStatus({ type: "error", msg: msg.slice(0, 200) });
+      }
     }
     setCreating(false);
   };
