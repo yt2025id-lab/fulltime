@@ -106,7 +106,7 @@ export default function Dashboard() {
     return fixtureId === 0 || [18218149, 18213979, 18222446].includes(fixtureId);
   }
   const [showFixtures, setShowFixtures] = useState(true);
-  const [fixtureQType, setFixtureQType] = useState<Record<number, "win" | "draw">>({});
+  const [fixtureQType, setFixtureQType] = useState<Record<number, "win" | "draw" | "lose">>({});
 
   const [betMarket, setBetMarket] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState("");
@@ -255,7 +255,7 @@ export default function Dashboard() {
 
   const reload = () => setTimeout(() => { loadMarkets(); loadBets(); }, 2000);
 
-  const createFixtureMarket = async (f: TxLineFixture, qType?: "win" | "draw") => {
+  const createFixtureMarket = async (f: TxLineFixture, qType?: "win" | "draw" | "lose") => {
     if (!program || !publicKey) {
       setStatus({ type: "error", msg: "Wallet not connected or program not loaded" });
       return;
@@ -266,6 +266,8 @@ export default function Dashboard() {
       const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
       const question = qType === "draw"
         ? `Will ${home} lose or draw?`
+        : qType === "lose"
+        ? `Will ${home} lose?`
         : `Will ${home} beat ${away}?`;
       const nowTs = Math.floor(Date.now() / 1000);
       const openTime = nowTs + 300; // 5 min from now
@@ -509,8 +511,12 @@ export default function Dashboard() {
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "draw" }))}
                             className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "draw" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
                           >Draw</button>
+                          <button
+                            onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "lose" }))}
+                            className={`px-3 py-1 text-[10px] font-mono transition-colors ${qt === "lose" ? "bg-red-600 text-white" : "text-white/50 hover:text-white"}`}
+                          >Lose</button>
                         </div>
-                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : `Will ${home} lose or draw?`}</span>
+                        <span className="text-[10px] font-mono text-white/30">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</span>
                       </div>
                       {hasExisting && (
                         <p className="mt-2 text-[10px] font-mono text-yellow-400/60">Market exists · switch wallet to create another</p>
