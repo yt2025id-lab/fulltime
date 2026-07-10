@@ -452,7 +452,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
                 {fixtures.filter(f => {
                   const fixtureId = f.FixtureId;
-                  return !markets.some(m => m.fixtureId === fixtureId);
+                  return !markets.some(m => m.fixtureId === fixtureId && (m.status === "open" || m.status === "pending"));
                 }).slice(0, 8).map(f => {
                   const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
                   const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
@@ -474,7 +474,7 @@ export default function Dashboard() {
                     </div>
                   );
                 })}
-                {fixtures.filter(f => !markets.some(m => m.fixtureId === f.FixtureId)).length === 0 && (
+                {fixtures.filter(f => !markets.some(m => m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending"))).length === 0 && (
                   <p className="col-span-2 text-center font-mono text-xs text-white/20 py-4">All fixtures have markets created</p>
                 )}
               </div>
