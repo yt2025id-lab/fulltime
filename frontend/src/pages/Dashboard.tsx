@@ -505,7 +505,12 @@ export default function Dashboard() {
             <p className="font-mono text-xs text-white/30 mb-4">{lang === "id" ? "Buat pasar prediksi tanpa kepercayaan langsung dari jadwal TxLINE — diselesaikan otomatis via Merkle proof CPI." : "Create a trustless prediction market directly from these TxLINE fixtures — auto-settled via Merkle proof CPI."}</p>
             {showFixtures && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
-                {fixtures.slice(0, 8)                  .map(f => {
+                {fixtures
+                  .filter(f => {
+                    const matchEnd = new Date(f.StartTime).getTime() + 3 * 60 * 60 * 1000;
+                    return now.getTime() <= matchEnd;
+                  })
+                  .slice(0, 8).map(f => {
                   const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
                   const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
                   const d = f.StartTime ? new Date(f.StartTime) : new Date();
