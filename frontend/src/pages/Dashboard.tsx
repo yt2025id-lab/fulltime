@@ -283,18 +283,18 @@ export default function Dashboard() {
     try {
       const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
       const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
-      const question = qType === "draw"
-        ? `Will ${home} lose or draw?`
+      const [question, qtRaw] = qType === "draw"
+        ? [`Will ${home} vs ${away} end in a draw?`, 1]
         : qType === "lose"
-        ? `Will ${home} lose?`
-        : `Will ${home} beat ${away}?`;
+        ? [`Will ${away} beat ${home}?`, 2]
+        : [`Will ${home} beat ${away}?`, 0];
       const nowTs = Math.floor(Date.now() / 1000);
       const openTime = nowTs + 300; // 5 min from now
       const matchTs = Math.floor(new Date(f.StartTime).getTime() / 1000);
       const closeTime = Math.max(openTime + 60, matchTs); // close at kickoff
       mark("Creating market...");
       await program.methods
-        .createMarket(new BN(f.FixtureId), question, new BN(openTime), new BN(closeTime), true)
+        .createMarket(new BN(f.FixtureId), question, qtRaw, new BN(openTime), new BN(closeTime), true)
         .accounts({ creator: publicKey, systemProgram: SystemProgram.programId })
         .rpc({ commitment: "confirmed" });
       const mpda = marketPda(publicKey, f.FixtureId);
@@ -323,7 +323,7 @@ export default function Dashboard() {
       const closeTime = Math.max(openTime + 3600, dl + 60);
       mark("Creating manual market...");
       await program.methods
-        .createMarket(new BN(0), question, new BN(openTime), new BN(closeTime), false)
+        .createMarket(new BN(0), question, 0, new BN(openTime), new BN(closeTime), false)
         .accounts({ creator: publicKey })
         .rpc();
       const mpda = marketPda(publicKey, 0);

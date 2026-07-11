@@ -18,6 +18,7 @@ pub struct Market {
     pub question: String,          // max 200 chars
     pub creator: Pubkey,
     pub outcome_count: u8,         // 2 (YES/NO binary)
+    pub question_type: u8,         // 0=home_win, 1=draw, 2=away_win
     pub total_pool: u64,
     pub pool_yes: u64,
     pub pool_no: u64,
@@ -40,6 +41,7 @@ impl Market {
         + 4 + 200 // question (4-byte len prefix + max 200 chars)
         + 32  // creator
         + 1   // outcome_count
+        + 1   // question_type
         + 8   // total_pool
         + 8   // pool_yes
         + 8   // pool_no
@@ -222,6 +224,8 @@ pub enum FullTimeError {
     FixtureIdRequired,
     #[msg("Trustless market override: wait 1h after betting close")]
     ResolveTooEarly,
+    #[msg("Invalid question type (must be 0=home_win, 1=draw, 2=away_win)")]
+    InvalidQuestionType,
 }
 
 // ─── Contexts ──────────────────────────────────────────────────────
@@ -488,6 +492,7 @@ pub mod fulltime {
         ctx: Context<CreateMarket>,
         fixture_id: u64,
         question: String,
+        question_type: u8,
         betting_open_time: i64,
         betting_close_time: i64,
         is_trustless: bool,
@@ -495,6 +500,10 @@ pub mod fulltime {
         require!(
             question.len() <= 200,
             FullTimeError::QuestionTooLong
+        );
+        require!(
+            question_type <= 2,
+            FullTimeError::InvalidQuestionType
         );
         require!(
             betting_close_time > betting_open_time,
@@ -515,6 +524,7 @@ pub mod fulltime {
         market.question = question.clone();
         market.creator = ctx.accounts.creator.key();
         market.outcome_count = 2;
+        market.question_type = question_type;
         market.total_pool = 0;
         market.pool_yes = 0;
         market.pool_no = 0;
@@ -687,7 +697,12 @@ pub mod fulltime {
         require!(home_goals >= 0, FullTimeError::InvalidStatValue);
         require!(away_goals >= 0, FullTimeError::InvalidStatValue);
 
-        let winning_option = if home_goals > away_goals { 0u8 } else { 1u8 };
+        let winning_option = match market.question_type {
+            0 => if home_goals > away_goals { 0u8 } else { 1u8 },    // home_win
+            1 => if home_goals == away_goals { 0u8 } else { 1u8 },   // draw
+            2 => if home_goals < away_goals { 0u8 } else { 1u8 },    // away_win
+            _ => return Err(FullTimeError::InvalidQuestionType.into()),
+        };
 
         let now = Clock::get()?.unix_timestamp;
         market.status = MarketStatus::Settled;
