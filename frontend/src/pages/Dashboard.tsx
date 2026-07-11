@@ -503,10 +503,12 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
                 {fixtures
                   .filter(f => {
-                    const hasMarket = markets.some(m =>
-                      m.fixtureId === f.FixtureId && (m.status === "open" || m.status === "pending" || m.status === "settled")
+                    const myMarket = publicKey && markets.some(m =>
+                      m.fixtureId === f.FixtureId &&
+                      m.creator === publicKey.toBase58() &&
+                      (m.status === "open" || m.status === "pending" || m.status === "settled")
                     );
-                    if (hasMarket) return false;
+                    if (myMarket) return false;
                     const matchEnd = new Date(f.StartTime).getTime() + 3 * 60 * 60 * 1000;
                     return now.getTime() <= matchEnd;
                   })
