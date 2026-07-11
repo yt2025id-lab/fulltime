@@ -31,14 +31,25 @@ export interface TxLineScore {
   ts?: number;
 }
 
-// Hardcoded WC2026 QF fixtures
+// Hardcoded WC2026 fixtures as fallback (QF + SF)
 const WC2026_FIXTURES: TxLineFixture[] = [
   { FixtureId: 18218149, Participant1: "Spain", Participant2: "Belgium", Participant1IsHome: true, StartTime: "2026-07-10T19:00:00Z", Competition: "World Cup", CompetitionId: 72 },
   { FixtureId: 18213979, Participant1: "Norway", Participant2: "England", Participant1IsHome: true, StartTime: "2026-07-11T21:00:00Z", Competition: "World Cup", CompetitionId: 72 },
   { FixtureId: 18222446, Participant1: "Argentina", Participant2: "Switzerland", Participant1IsHome: true, StartTime: "2026-07-12T01:00:00Z", Competition: "World Cup", CompetitionId: 72 },
+  { FixtureId: 18237038, Participant1: "France", Participant2: "Spain", Participant1IsHome: true, StartTime: "2026-07-14T19:00:00Z", Competition: "World Cup", CompetitionId: 72 },
 ];
 
 export async function fetchFixtures(): Promise<TxLineFixture[]> {
+  try {
+    const res = await fetch("/api/txline/api/fixtures/snapshot");
+    if (res.ok) {
+      const data: TxLineFixture[] = await res.json();
+      if (data && data.length > 0) {
+        const wc = data.filter(f => f.CompetitionId === 72);
+        if (wc.length > 0) return wc.map(f => ({ ...f, Competition: "World Cup" }));
+      }
+    }
+  } catch { /* relay not available, use fallback */ }
   return WC2026_FIXTURES;
 }
 
