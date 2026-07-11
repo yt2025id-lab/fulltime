@@ -505,21 +505,17 @@ export default function Dashboard() {
             <p className="font-mono text-xs text-white/30 mb-4">{lang === "id" ? "Buat pasar prediksi tanpa kepercayaan langsung dari jadwal TxLINE — diselesaikan otomatis via Merkle proof CPI." : "Create a trustless prediction market directly from these TxLINE fixtures — auto-settled via Merkle proof CPI."}</p>
             {showFixtures && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
-                {fixtures
-                  .filter(f => {
-                    return publicKey && !markets.some(m =>
-                      m.fixtureId === f.FixtureId &&
-                      m.creator === publicKey.toBase58() &&
-                      (m.status === "open" || m.status === "pending" || m.status === "settled")
-                    );
-                  })
-                  .slice(0, 8)
-                  .map(f => {
+                {fixtures.slice(0, 8)                  .map(f => {
                   const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
                   const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
                   const d = f.StartTime ? new Date(f.StartTime) : new Date();
                   const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   const qt = fixtureQType[f.FixtureId] || "win";
+                  const hasExisting = publicKey && markets.some(m =>
+                    m.fixtureId === f.FixtureId &&
+                    m.creator === publicKey.toBase58() &&
+                    (m.status === "open" || m.status === "pending" || m.status === "settled")
+                  );
                   return (
                     <div key={f.FixtureId} className="group relative w-full overflow-hidden rounded-2xl bg-zinc-800/40 p-5 font-sans shadow-2xl border border-zinc-600/20">
                       <div className="absolute -top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-transparent blur-3xl transition-all duration-700 group-hover:from-emerald-500/30 group-hover:via-amber-500/20"></div>
@@ -545,11 +541,15 @@ export default function Dashboard() {
                             className={`flex-1 pl-3 text-right py-1 transition-all ${qt === "lose" ? "bg-red-500/15" : "opacity-50 hover:opacity-100"}`}
                           ><p className={`text-[10px] font-medium font-mono ${qt === "lose" ? "text-red-300" : "text-neutral-500"}`}>Lose</p><p className={`text-xl font-semibold ${qt === "lose" ? "text-red-200" : "text-neutral-300"}`}>{flagEmoji(away)}</p></button>
                         </div>
+                        {hasExisting ? (
+                          <p className="text-[10px] font-mono text-yellow-400/60 text-center py-2">Market exists · switch wallet</p>
+                        ) : (
                         <button
                           onClick={() => createFixtureMarket(f, qt)}
                           disabled={creating}
-                          className="rounded-lg border border-amber-500/40 bg-transparent px-4 py-2 text-xs font-medium text-amber-400 transition-colors duration-300 hover:bg-amber-400 hover:text-black disabled:opacity-30"
+                          className="rounded-lg border border-amber-500/40 bg-transparent px-4 py-2 text-xs font-medium text-amber-400 transition-colors duration-300 hover:bg-amber-400 hover:text-black disabled:opacity-30 w-full"
                         >{lang === "id" ? "Buat & Taruh" : "Create & Bet"}</button>
+                        )}
                       </div>
                     </div>
                   );
