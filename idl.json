@@ -1244,10 +1244,6 @@
             "type": "u8"
           },
           {
-            "name": "question_type",
-            "type": "u8"
-          },
-          {
             "name": "total_pool",
             "type": "u64"
           },

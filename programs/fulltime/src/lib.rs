@@ -17,8 +17,7 @@ pub struct Market {
     pub fixture_id: u64,
     pub question: String,          // max 200 chars
     pub creator: Pubkey,
-    pub outcome_count: u8,         // 2 (YES/NO binary)
-    pub question_type: u8,         // 0=home_win, 1=draw, 2=away_win
+    pub outcome_count: u8,         // lower bits = 2 (YES/NO binary); upper bits = question_type (0=home_win, 1=draw, 2=away_win)
     pub total_pool: u64,
     pub pool_yes: u64,
     pub pool_no: u64,
@@ -41,7 +40,6 @@ impl Market {
         + 4 + 200 // question (4-byte len prefix + max 200 chars)
         + 32  // creator
         + 1   // outcome_count
-        + 1   // question_type
         + 8   // total_pool
         + 8   // pool_yes
         + 8   // pool_no
@@ -56,6 +54,17 @@ impl Market {
         + 8   // dispute_until
         + 2   // fee_bps
         + 1;  // bump
+
+    /// Pack question_type into upper bits of outcome_count.
+    /// outcome_count = 0x02 | (question_type << 4)
+    /// Old accounts have outcome_count = 2 (0x02) → get_question_type() = 0 (home_win).
+    pub fn set_question_type(&mut self, qt: u8) {
+        self.outcome_count = 2 | (qt << 4);
+    }
+
+    pub fn get_question_type(&self) -> u8 {
+        (self.outcome_count >> 4) & 0x03
+    }
 }
 
 #[account]
@@ -524,7 +533,7 @@ pub mod fulltime {
         market.question = question.clone();
         market.creator = ctx.accounts.creator.key();
         market.outcome_count = 2;
-        market.question_type = question_type;
+        market.set_question_type(question_type);
         market.total_pool = 0;
         market.pool_yes = 0;
         market.pool_no = 0;
@@ -697,7 +706,7 @@ pub mod fulltime {
         require!(home_goals >= 0, FullTimeError::InvalidStatValue);
         require!(away_goals >= 0, FullTimeError::InvalidStatValue);
 
-        let winning_option = match market.question_type {
+        let winning_option = match market.get_question_type() {
             0 => if home_goals > away_goals { 0u8 } else { 1u8 },    // home_win
             1 => if home_goals == away_goals { 0u8 } else { 1u8 },   // draw
             2 => if home_goals < away_goals { 0u8 } else { 1u8 },    // away_win
