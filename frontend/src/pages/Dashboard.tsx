@@ -116,6 +116,10 @@ export default function Dashboard() {
   function showMarket(fixtureId: number): boolean {
     return fixtureId === 0 || [18218149, 18213979, 18222446].includes(fixtureId);
   }
+  const isDeprecatedMarket = useCallback((q: string) => {
+    const old = ["Will Norway lose or draw?", "Will Spain lose or draw?", "Will Argentina lose or draw?"];
+    return old.includes(q);
+  }, []);
   const [showFixtures, setShowFixtures] = useState(true);
   const [fixtureQType, setFixtureQType] = useState<Record<number, "win" | "draw" | "lose">>({});
 
@@ -633,6 +637,7 @@ export default function Dashboard() {
             if (m.status === "cancelled") return false;
             if (!m.isTrustless && m.status === "settled") return false;
             if (!showMarket(m.fixtureId)) return false;
+            if (isDeprecatedMarket(m.question)) return false;
             return true;
           }).length})</span></h2>
           <button onClick={reload} disabled={loading} className="bg-zinc-800/30 border border-zinc-600/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-mono text-white/60 hover:text-white disabled:opacity-40">{loading ? (lang === "id" ? "Memuat..." : "Loading...") : t("dash.refresh")}</button>
@@ -655,6 +660,7 @@ export default function Dashboard() {
             }).filter(m => {
               if (!m.isTrustless && m.status === "settled") return false;
               if (!showMarket(m.fixtureId)) return false;
+              if (isDeprecatedMarket(m.question)) return false;
               return true;
             }).map((m, idx) => {
               const st = statusLabel(m.status);
