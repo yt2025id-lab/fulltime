@@ -507,14 +507,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
                 {fixtures
                   .filter(f => {
-                    const myMarket = publicKey && markets.some(m =>
+                    return publicKey && !markets.some(m =>
                       m.fixtureId === f.FixtureId &&
                       m.creator === publicKey.toBase58() &&
                       (m.status === "open" || m.status === "pending" || m.status === "settled")
                     );
-                    if (myMarket) return false;
-                    const matchEnd = new Date(f.StartTime).getTime() + 3 * 60 * 60 * 1000;
-                    return now.getTime() <= matchEnd;
                   })
                   .slice(0, 8)
                   .map(f => {
@@ -533,7 +530,7 @@ export default function Dashboard() {
                             <div className="text-[10px] text-neutral-500 font-mono mt-1">#{f.FixtureId} · {dateStr} · Trustless</div>
                           </div>
                         </div>
-                        <p className="text-sm text-neutral-200 font-medium leading-snug">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} lose or draw?` : `Will ${home} lose?`}</p>
+                        <p className="text-sm text-neutral-200 font-medium leading-snug">{qt === "win" ? `Will ${home} beat ${away}?` : qt === "draw" ? `Will ${home} vs ${away} end in a draw?` : `Will ${away} beat ${home}?`}</p>
                         <div className="flex divide-x divide-neutral-800 rounded-lg overflow-hidden">
                           <button
                             onClick={() => setFixtureQType(p => ({ ...p, [f.FixtureId]: "win" }))}
