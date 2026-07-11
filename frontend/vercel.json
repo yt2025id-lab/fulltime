@@ -2,6 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "installCommand": "npm install",
   "rewrites": [
     { "source": "/api/txline/(.*)", "destination": "/api/txline-proxy?proxy=$1" },
     { "source": "/api/football/(.*)", "destination": "/api/football-proxy?path=$1" },
